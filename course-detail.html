@@ -651,6 +651,7 @@ footer a:hover{color:var(--gold);}
       </div>
       <button class="btn btn-outline btn-block" id="shareCourseBtn" data-share-type="course" style="margin-top:10px;">Partager ce cours</button>
       <ul class="sidebar-list">
+        <li><span>Langue du cours</span><b id="dLanguage">—</b></li>
         <li><span>Type de parcours</span><b id="dTrackText">—</b></li>
         <li><span>Modules</span><b id="dModuleCount">—</b></li>
         <li><span>Validation finale</span><b id="dFinalType">—</b></li>
@@ -882,6 +883,7 @@ function renderCourse(course){
     ? `Par <a href="formateur-profil.html?id=${course.teacher_id}" style="color:#fff;text-decoration:underline;">${escapeHtml(course.profiles?.full_name || 'Formateur')}</a>`
     : 'Par JC Academy';
   document.getElementById('dTrackBadge').textContent = course.track === 'diplome' ? 'Programme Diplôme' : 'Programme Certificat';
+  document.getElementById('dLanguage').textContent = ({fr:'Français', en:'Anglais', es:'Espagnol'})[course.language] || 'Français';
   document.getElementById('dTrackText').textContent = course.track === 'diplome' ? 'Diplôme' : 'Certificat';
   document.getElementById('dFinalType').textContent = course.final_assessment_type === 'projet' ? 'Projet à soumettre' : 'Quiz final';
   document.getElementById('dPrice').textContent = course.price > 0 ? course.price + ' HTG' : 'Gratuit';

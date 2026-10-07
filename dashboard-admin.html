@@ -1018,7 +1018,7 @@ async function loadCourses(){
     loaded.courses = false; loadCourses(); loadOverview();
   }));
   wrap.querySelectorAll('[data-action="reject-course"]').forEach(btn => btn.addEventListener('click', async () => {
-    const reason = prompt('Motif du rejet (visible par le formateur) :');
+    const reason = await showPrompt('Motif du rejet (visible par le formateur) :');
     if (reason === null) return;
     btn.disabled = true;
     const { error } = await supabase.from('courses').update({ status: 'rejete', rejection_reason: reason }).eq('id', btn.dataset.id);
@@ -1067,7 +1067,7 @@ async function loadTeachers(){
     loaded.teachers = false; loadTeachers(); loadOverview();
   }));
   wrap.querySelectorAll('[data-action="reject-app"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Rejeter cette candidature ?')) return;
+    if (!(await showConfirm('Rejeter cette candidature ?'))) return;
     btn.disabled = true;
     const { error } = await supabase.from('teacher_applications').update({ status: 'rejete' }).eq('id', btn.dataset.id);
     if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
@@ -1104,7 +1104,7 @@ async function loadCertificates(){
   `).join('');
 
   wrap.querySelectorAll('[data-action="deliver-cert"]').forEach(btn => btn.addEventListener('click', async () => {
-    const url = prompt("Lien du certificat conçu (PDF hébergé) à envoyer à l'étudiant :");
+    const url = await showPrompt("Lien du certificat conçu (PDF hébergé) à envoyer à l'étudiant :");
     if (!url) return;
     btn.disabled = true;
     const { error } = await supabase.from('certificates').update({
@@ -1141,7 +1141,7 @@ async function loadUsers(){
 
   tbody.querySelectorAll('[data-action="change-role"]').forEach(sel => sel.addEventListener('change', async () => {
     const newRole = sel.value;
-    if (!confirm(`Changer le rôle de cet utilisateur en "${newRole}" ?`)) { loaded.users = false; loadUsers(); return; }
+    if (!(await showConfirm(`Changer le rôle de cet utilisateur en "${newRole}" ?`))) { loaded.users = false; loadUsers(); return; }
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', sel.dataset.id);
     if (error) alert('Erreur : ' + error.message);
   }));
@@ -1184,7 +1184,7 @@ async function loadProducts(){
     loaded.products = false; loadProducts();
   }));
   wrap.querySelectorAll('[data-action="delete-product"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer définitivement ce produit ?')) return;
+    if (!(await showConfirm('Supprimer définitivement ce produit ?'))) return;
     btn.disabled = true;
     const { error } = await supabase.from('digital_products').delete().eq('id', btn.dataset.id);
     if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
@@ -1324,7 +1324,7 @@ async function loadContentList(){
     loaded.content = false; loadContentList();
   }));
   wrap.querySelectorAll('[data-action="delete-content"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer définitivement ce contenu ?')) return;
+    if (!(await showConfirm('Supprimer définitivement ce contenu ?'))) return;
     await supabase.from('site_content').delete().eq('id', btn.dataset.id);
     loaded.content = false; loadContentList();
   }));
@@ -1382,7 +1382,7 @@ async function loadGallery(){
   `).join('');
 
   wrap.querySelectorAll('[data-action="delete-gallery"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer cette image ?')) return;
+    if (!(await showConfirm('Supprimer cette image ?'))) return;
     await supabase.from('gallery_images').delete().eq('id', btn.dataset.id);
     loaded.gallery = false; loadGallery();
   }));
@@ -1532,6 +1532,7 @@ document.getElementById('savePageContentBtn').addEventListener('click', async ()
 });
 </script>
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

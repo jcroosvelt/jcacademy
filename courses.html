@@ -342,6 +342,7 @@ img{max-width:100%;display:block;}
 .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
 .badge-free{background:#E4F7EE;color:var(--success);}
 .badge-paid{background:#FDF0DA;color:#B57200;}
+.badge-lang{background:#E7ECF7;color:var(--navy);}
 .badge-diplome{background:var(--navy-soft);color:var(--navy);}
 .badge-certificat{background:#FBEAD2;color:#8A5A00;}
 .course-body h3{font-size:16.5px;margin:0;line-height:1.3;}
@@ -738,6 +739,7 @@ async function updateNavForSession(session){
 }
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function languageLabel(code){ return ({fr:'Français', en:'Anglais', es:'Espagnol'})[code] || 'Français'; }
 
 document.getElementById('navBurger').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
 
@@ -791,6 +793,7 @@ async function loadCourses(){
         <div class="course-tags">
           <span class="badge ${c.price > 0 ? 'badge-paid' : 'badge-free'}">${c.price > 0 ? 'Payant' : 'Gratuit'}</span>
           <span class="badge ${c.track === 'diplome' ? 'badge-diplome' : 'badge-certificat'}">${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}</span>
+          <span class="badge badge-lang">${languageLabel(c.language)}</span>
         </div>
         <h3>${escapeHtml(c.title)}</h3>
         <div class="course-meta">${escapeHtml(c.profiles?.full_name || 'JC Academy')}</div>

@@ -719,6 +719,14 @@ footer a:hover{color:var(--gold);}
                   <input type="number" id="cPrice" min="0" step="1" value="0" required>
                 </div>
               </div>
+              <div class="form-group">
+                <label>Langue du cours</label>
+                <select id="cLanguage">
+                  <option value="fr">Français</option>
+                  <option value="en">Anglais</option>
+                  <option value="es">Espagnol</option>
+                </select>
+              </div>
               <div class="form-row">
                 <div class="form-group">
                   <label>Type de parcours</label>
@@ -1063,6 +1071,7 @@ async function openCourseEditor(courseId){
   document.getElementById('cPrereq').value = c.prerequisites || '';
   document.getElementById('cCategory').value = c.category || '';
   document.getElementById('cPrice').value = c.price;
+  document.getElementById('cLanguage').value = c.language || 'fr';
   document.querySelector(`input[name="cTrack"][value="${c.track}"]`).checked = true;
   document.querySelector(`input[name="cFinal"][value="${c.final_assessment_type}"]`).checked = true;
   if (c.thumbnail_url){
@@ -1102,6 +1111,7 @@ async function saveCourse(targetStatus){
     prerequisites: document.getElementById('cPrereq').value.trim(),
     category: document.getElementById('cCategory').value.trim(),
     price: Number(document.getElementById('cPrice').value) || 0,
+    language: document.getElementById('cLanguage').value,
     track: document.querySelector('input[name="cTrack"]:checked').value,
     final_assessment_type: document.querySelector('input[name="cFinal"]:checked').value,
     teacher_id: currentUser.id
@@ -1169,7 +1179,7 @@ async function loadModules(courseId){
     if (!box.classList.contains('hidden')) loadQuiz(btn.dataset.id, box);
   }));
   wrap.querySelectorAll('[data-action="delete-module"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer ce module et tout son contenu ?')) return;
+    if (!(await showConfirm('Supprimer ce module et tout son contenu ?'))) return;
     const { error } = await supabase.from('course_modules').delete().eq('id', btn.dataset.id);
     if (error){ alert('Erreur : ' + error.message); return; }
     loadModules(courseId);
@@ -1177,7 +1187,7 @@ async function loadModules(courseId){
 }
 
 document.getElementById('addModuleBtn').addEventListener('click', async () => {
-  const title = prompt('Titre du nouveau module :');
+  const title = await showPrompt('Titre du nouveau module :');
   if (!title) return;
   const { count } = await supabase.from('course_modules').select('id',{count:'exact',head:true}).eq('course_id', currentCourseId);
   const { error } = await supabase.from('course_modules').insert({ course_id: currentCourseId, title, position: (count||0) + 1 });
@@ -1235,12 +1245,12 @@ async function loadLessons(moduleId, box){
   });
 
   const rteContent = document.getElementById(`newLessonContent-${moduleId}`);
-  box.querySelectorAll('.rte-toolbar button').forEach(btn => btn.addEventListener('click', (e) => {
+  box.querySelectorAll('.rte-toolbar button').forEach(btn => btn.addEventListener('click', async (e) => {
     e.preventDefault();
     rteContent.focus();
     const cmd = btn.dataset.cmd;
     if (cmd === 'createLink'){
-      const url = prompt('URL du lien :');
+      const url = await showPrompt('URL du lien :');
       if (url) document.execCommand(cmd, false, url);
     } else {
       document.execCommand(cmd, false, null);
@@ -1248,7 +1258,7 @@ async function loadLessons(moduleId, box){
   }));
 
   box.querySelectorAll('[data-action="delete-lesson"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer cette leçon ?')) return;
+    if (!(await showConfirm('Supprimer cette leçon ?'))) return;
     await supabase.from('lessons').delete().eq('id', btn.dataset.id);
     loadLessons(moduleId, box);
   }));
@@ -1346,7 +1356,7 @@ async function loadQuiz(moduleId, box){
   `;
 
   box.querySelectorAll('[data-action="delete-question"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer cette question ?')) return;
+    if (!(await showConfirm('Supprimer cette question ?'))) return;
     await supabase.from('quiz_questions').delete().eq('id', btn.dataset.id);
     loadQuiz(moduleId, box);
   }));
@@ -1513,13 +1523,14 @@ async function loadProducts(){
     openProductEditor(product);
   }));
   wrap.querySelectorAll('[data-action="delete-product"]').forEach(btn => btn.addEventListener('click', async () => {
-    if (!confirm('Supprimer ce produit ?')) return;
+    if (!(await showConfirm('Supprimer ce produit ?'))) return;
     await supabase.from('digital_products').delete().eq('id', btn.dataset.id);
     loaded.products = false; loadProducts();
   }));
 }
 </script>
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

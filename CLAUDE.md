@@ -40,6 +40,7 @@
   - aucune fenêtre native ajoutée.
 - Côté Supabase : tester les règles RLS dans un bloc `DO $$ ... RAISE EXCEPTION 'RESULTAT_TEST: ...' $$`, qui annule tout. Ne laisser aucune donnée de test. Relancer l'audit de sécurité (advisors) après chaque migration.
 - Zip de livraison : fichiers **à plat**.
+- **Déploiement automatique (autorisé par Joseph le 5 novembre 2026)** : chaque modification validée est envoyée directement sur la branche `main` du dépôt GitHub `jcroosvelt/jcacademy`, sans demander de nouvelle confirmation.
 
 ## 5. Ce qui a été fait récemment (octobre-novembre 2026)
 

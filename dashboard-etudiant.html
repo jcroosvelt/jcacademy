@@ -748,6 +748,7 @@ footer a:hover{color:var(--gold);}
 </section>
 
 
+<script src="rich.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(
@@ -1060,27 +1061,6 @@ function findLessonLocation(lessonId){
   return null;
 }
 
-function sanitizeLessonHtml(html){
-  const allowed = ['B','I','U','STRONG','EM','UL','OL','LI','BR','P','A','DIV','SPAN'];
-  const doc = new DOMParser().parseFromString(html || '', 'text/html');
-  (function clean(node){
-    [...node.childNodes].forEach(child => {
-      if (child.nodeType === 1){
-        if (!allowed.includes(child.tagName)){
-          const text = document.createTextNode(child.textContent);
-          child.replaceWith(text);
-          return;
-        }
-        [...child.attributes].forEach(attr => {
-          if (!(child.tagName === 'A' && attr.name === 'href')) child.removeAttribute(attr.name);
-        });
-        if (child.tagName === 'A') child.setAttribute('target', '_blank');
-        clean(child);
-      }
-    });
-  })(doc.body);
-  return doc.body.innerHTML;
-}
 
 function selectLesson(lessonId){
   const loc = findLessonLocation(lessonId);
@@ -1093,7 +1073,7 @@ function selectLesson(lessonId){
   const activeEl = [...document.querySelectorAll('.pnav-lesson')].find(el => el.dataset.id === lessonId);
   activeEl?.classList.add('active');
 
-  let html = `<h3>${escapeHtml(lesson.title)}</h3><div class="lesson-text">${sanitizeLessonHtml(lesson.content)}</div>`;
+  let html = `<h3>${escapeHtml(lesson.title)}</h3><div class="lesson-text rich-content">${window.JCRich.render(lesson.content)}</div>`;
 
   if (!textRead){
     html += `<button class="btn btn-primary" id="markReadBtn">J'ai terminé la lecture</button>`;

@@ -692,7 +692,7 @@ footer a:hover{color:var(--gold);}
   </div>
 
   <div class="tab-content active" id="tab-presentation">
-    <p id="dFullDesc" style="font-size:15px;line-height:1.8;"></p>
+    <div id="dFullDesc" class="rich-content" style="font-size:15px;"></div>
   </div>
 
   <div class="tab-content" id="tab-prerequis">
@@ -776,6 +776,7 @@ footer a:hover{color:var(--gold);}
 </footer>
 
 
+<script src="rich.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(
@@ -989,7 +990,7 @@ function renderCourse(course){
 
   document.getElementById('dTitle').textContent = course.title;
   document.getElementById('dShortDesc').textContent = course.short_description || '';
-  document.getElementById('dFullDesc').textContent = course.description || course.short_description || '';
+  document.getElementById('dFullDesc').innerHTML = window.JCRich.render(course.description || course.short_description || '');
   document.getElementById('dPrereq').textContent = course.prerequisites || 'Aucun pré-requis particulier pour ce cours.';
   document.getElementById('dTeacher').innerHTML = course.teacher_id
     ? `Par <a href="formateur-profil.html?id=${course.teacher_id}" style="color:#fff;text-decoration:underline;">${escapeHtml(course.profiles?.full_name || 'Formateur')}</a>`

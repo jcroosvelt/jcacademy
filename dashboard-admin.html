@@ -839,25 +839,7 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
           <div class="form-group"><label>Extrait (résumé affiché sur les cartes)</label><textarea id="cExcerpt" style="min-height:70px;"></textarea></div>
           <div class="form-group">
             <label>Contenu complet</label>
-            <div class="rte-toolbar" id="cBodyToolbar">
-              <button type="button" data-cmd="bold" title="Gras"><b>B</b></button>
-              <button type="button" data-cmd="italic" title="Italique"><i>I</i></button>
-              <button type="button" data-cmd="underline" title="Souligné"><u>U</u></button>
-              <div class="rte-sep"></div>
-              <button type="button" data-cmd="formatBlock" data-value="h2" title="Grand intertitre" style="width:auto;padding:0 8px;font-weight:700;">T1</button>
-              <button type="button" data-cmd="formatBlock" data-value="h3" title="Petit intertitre" style="width:auto;padding:0 8px;font-weight:700;">T2</button>
-              <button type="button" data-cmd="formatBlock" data-value="p" title="Paragraphe normal" style="width:auto;padding:0 8px;">¶</button>
-              <button type="button" data-cmd="formatBlock" data-value="blockquote" title="Citation" style="font-weight:700;">&ldquo;</button>
-              <div class="rte-sep"></div>
-              <button type="button" data-cmd="insertUnorderedList" title="Liste à puces">&#8226;</button>
-              <button type="button" data-cmd="insertOrderedList" title="Liste numérotée">1.</button>
-              <div class="rte-sep"></div>
-              <button type="button" data-cmd="createLink" title="Lien">&#128279;</button>
-              <button type="button" data-cmd="insertImage" title="Insérer une image" style="width:auto;padding:0 10px;">Image</button>
-            </div>
-            <div class="rte-content" id="cBodyEditor" contenteditable="true"></div>
-            <input type="file" accept="image/*" class="file-input-hidden" id="cBodyImageInput">
-            <p class="small-muted" id="cBodyImageStatus" style="margin:6px 0 0;"></p>
+            <div id="cBodyEditor"></div>
           </div>
           <div class="form-group">
             <label>Image de couverture</label>
@@ -994,6 +976,8 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
   </div>
 </footer>
 
+<script src="rich.js"></script>
+<script src="editor.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(
@@ -1881,78 +1865,23 @@ document.getElementById('cCoverInput').addEventListener('change', (e) => {
   }
 });
 
-/* ===== Editeur riche du corps des articles / actualites ===== */
-const cBodyEditor = document.getElementById('cBodyEditor');
-let cBodySavedRange = null;
-function escapeEditorText(t){ return (t||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-/* Les anciens contenus sont en texte brut : on les convertit en paragraphes */
-function bodyToEditorHtml(body){
-  if (!body) return '';
-  if (/<\/?[a-z][^>]*>/i.test(body)) return body;
-  return body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
-    .map(p => '<p>' + escapeEditorText(p).replace(/\n/g, '<br>') + '</p>').join('');
-}
-function editorBodyHtml(){
-  const hasText = cBodyEditor.innerText.trim().length > 0;
-  const hasImg = !!cBodyEditor.querySelector('img');
-  return (hasText || hasImg) ? cBodyEditor.innerHTML.trim() : '';
-}
-function saveBodySelection(){
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount && cBodyEditor.contains(sel.getRangeAt(0).commonAncestorContainer)){
-    cBodySavedRange = sel.getRangeAt(0).cloneRange();
-  }
-}
-function restoreBodySelection(){
-  cBodyEditor.focus();
-  if (!cBodySavedRange) return;
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(cBodySavedRange);
-}
-['keyup','mouseup','touchend','input'].forEach(ev => cBodyEditor.addEventListener(ev, saveBodySelection));
-document.getElementById('cBodyToolbar').querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('mousedown', (e) => e.preventDefault());
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const cmd = btn.dataset.cmd;
-    if (cmd === 'insertImage'){
-      saveBodySelection();
-      document.getElementById('cBodyImageInput').click();
-      return;
+/* ===== Editeur riche du corps des articles / actualites (editor.js) ===== */
+let contentEditor = null;
+async function getContentEditor(){
+  if (contentEditor) return contentEditor;
+  contentEditor = await JCEditor.create(document.getElementById('cBodyEditor'), {
+    placeholder: "Rédigez votre article ici...",
+    minHeight: 360,
+    uploadImage: async (file) => {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${currentUser.id}/body/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
+      if (upErr) throw upErr;
+      return supabase.storage.from('articles').getPublicUrl(path).data.publicUrl;
     }
-    if (cmd === 'createLink'){
-      saveBodySelection();
-      const url = await showPrompt('URL du lien (https://...) :');
-      restoreBodySelection();
-      if (url) document.execCommand('createLink', false, url.trim());
-      saveBodySelection();
-      return;
-    }
-    restoreBodySelection();
-    if (cmd === 'formatBlock') document.execCommand('formatBlock', false, '<' + btn.dataset.value + '>');
-    else document.execCommand(cmd, false, null);
-    saveBodySelection();
   });
-});
-document.getElementById('cBodyImageInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  const status = document.getElementById('cBodyImageStatus');
-  if (!file.type.startsWith('image/')){ status.textContent = 'Ce fichier n\'est pas une image.'; return; }
-  if (file.size > 5 * 1024 * 1024){ status.textContent = 'Image trop lourde (5 Mo maximum).'; return; }
-  status.textContent = 'Envoi de l\'image...';
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const path = `${currentUser.id}/body/${Date.now()}-${safeName}`;
-  const { error: upErr } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
-  if (upErr){ status.textContent = 'Erreur upload image : ' + upErr.message; return; }
-  const url = supabase.storage.from('articles').getPublicUrl(path).data.publicUrl;
-  restoreBodySelection();
-  document.execCommand('insertHTML', false, '<p><img src="' + escapeEditorText(url) + '" alt=""></p><p><br></p>');
-  saveBodySelection();
-  status.textContent = 'Image insérée.';
-});
+  return contentEditor;
+}
 
 function openContentEditor(item){
   editingContentId = item?.id || null;
@@ -1962,12 +1891,12 @@ function openContentEditor(item){
   document.getElementById('cTitle').value = item?.title || '';
   document.getElementById('cAuthor').value = item?.author_name || '';
   document.getElementById('cExcerpt').value = item?.excerpt || '';
-  document.getElementById('cBodyEditor').innerHTML = bodyToEditorHtml(item?.body || '');
-  document.getElementById('cBodyImageStatus').textContent = '';
   document.getElementById('cCoverPreview').classList.toggle('show', !!item?.cover_url);
   if (item?.cover_url) document.getElementById('cCoverPreview').src = item.cover_url;
   document.getElementById('contentMsg').style.display = 'none';
   document.getElementById('contentEditor').classList.remove('hidden');
+  getContentEditor().then(ed => ed.setHTML(item?.body || ''))
+    .catch(err => showContentMsg(err.message || "L'éditeur n'a pas pu être chargé.", true));
 }
 
 function showContentMsg(text, isError){
@@ -1984,7 +1913,7 @@ async function saveContent(publish){
     title,
     author_name: document.getElementById('cAuthor').value.trim(),
     excerpt: document.getElementById('cExcerpt').value.trim(),
-    body: editorBodyHtml(),
+    body: contentEditor ? contentEditor.getHTML() : undefined, // undefined = ne pas toucher si l'éditeur n'a pas chargé
     published: publish,
   };
 

@@ -703,7 +703,7 @@ footer a:hover{color:var(--gold);}
               </div>
               <div class="form-group">
                 <label>Présentation complète</label>
-                <textarea id="cDesc" style="min-height:140px;"></textarea>
+                <div id="cDesc"></div>
               </div>
               <div class="form-group">
                 <label>Pré-requis</label>
@@ -876,6 +876,8 @@ footer a:hover{color:var(--gold);}
   </div>
 </footer>
 
+<script src="rich.js"></script>
+<script src="editor.js"></script>
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(
@@ -1092,6 +1094,30 @@ function toLocalInputValue(iso){
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/* ---- Editeur de texte riche (editor.js) : presentation du cours et lecons ---- */
+async function uploadTeacherContentImage(file){
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${currentUser.id}/content/${Date.now()}-${safeName}`;
+  const { error: upErr } = await supabase.storage.from('course-covers').upload(path, file, { upsert: false });
+  if (upErr) throw upErr;
+  return supabase.storage.from('course-covers').getPublicUrl(path).data.publicUrl;
+}
+let descEditor = null;
+async function getDescEditor(){
+  if (!descEditor){
+    descEditor = await JCEditor.create(document.getElementById('cDesc'), {
+      placeholder: 'Présentez votre cours : objectifs, contenu, public visé...',
+      minHeight: 260,
+      uploadImage: uploadTeacherContentImage
+    });
+  }
+  return descEditor;
+}
+function setDescHtml(html){
+  getDescEditor().then(ed => ed.setHTML(html || ''))
+    .catch(err => showCourseMsg(err.message || "L'éditeur n'a pas pu être chargé.", true));
+}
+
 /* ---- Editeur de cours ---- */
 async function openCourseEditor(courseId){
   currentCourseId = courseId;
@@ -1104,6 +1130,7 @@ async function openCourseEditor(courseId){
 
   if (!courseId){
     document.getElementById('editorTitle').textContent = 'Nouveau cours';
+    setDescHtml('');
     return;
   }
 
@@ -1113,7 +1140,7 @@ async function openCourseEditor(courseId){
 
   document.getElementById('cTitle').value = c.title;
   document.getElementById('cShortDesc').value = c.short_description || '';
-  document.getElementById('cDesc').value = c.description || '';
+  setDescHtml(c.description || '');
   document.getElementById('cPrereq').value = c.prerequisites || '';
   document.getElementById('cStartDate').value = toLocalInputValue(c.start_date);
   document.getElementById('cCategory').value = c.category || '';
@@ -1154,7 +1181,7 @@ async function saveCourse(targetStatus){
   const payload = {
     title,
     short_description: shortDesc,
-    description: document.getElementById('cDesc').value.trim(),
+    description: descEditor ? descEditor.getHTML() : undefined, // undefined = ne pas toucher si l'éditeur n'a pas chargé
     prerequisites: document.getElementById('cPrereq').value.trim(),
     start_date: document.getElementById('cStartDate').value ? new Date(document.getElementById('cStartDate').value).toISOString() : null,
     category: document.getElementById('cCategory').value.trim(),
@@ -1259,17 +1286,7 @@ async function loadLessons(moduleId, box){
       <div class="form-group"><label>Titre de la leçon</label><input type="text" id="newLessonTitle-${moduleId}"></div>
       <div class="form-group">
         <label>Texte théorique (obligatoire avant la vidéo)</label>
-        <div class="rte-toolbar">
-          <button type="button" data-cmd="bold" title="Gras"><b>B</b></button>
-          <button type="button" data-cmd="italic" title="Italique"><i>I</i></button>
-          <button type="button" data-cmd="underline" title="Souligné"><u>U</u></button>
-          <div class="rte-sep"></div>
-          <button type="button" data-cmd="insertUnorderedList" title="Liste à puces">&#8226;</button>
-          <button type="button" data-cmd="insertOrderedList" title="Liste numérotée">1.</button>
-          <div class="rte-sep"></div>
-          <button type="button" data-cmd="createLink" title="Lien">&#128279;</button>
-        </div>
-        <div class="rte-content" id="newLessonContent-${moduleId}" contenteditable="true"></div>
+        <div id="newLessonContent-${moduleId}"></div>
       </div>
       <div class="form-group">
         <label>Vidéo</label>
@@ -1292,18 +1309,13 @@ async function loadLessons(moduleId, box){
     document.getElementById(`videoName-${moduleId}`).textContent = pendingVideo ? pendingVideo.name : '';
   });
 
-  const rteContent = document.getElementById(`newLessonContent-${moduleId}`);
-  box.querySelectorAll('.rte-toolbar button').forEach(btn => btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    rteContent.focus();
-    const cmd = btn.dataset.cmd;
-    if (cmd === 'createLink'){
-      const url = await showPrompt('URL du lien :');
-      if (url) document.execCommand(cmd, false, url);
-    } else {
-      document.execCommand(cmd, false, null);
-    }
-  }));
+  let lessonEditor = null;
+  JCEditor.create(document.getElementById(`newLessonContent-${moduleId}`), {
+    placeholder: 'Rédigez le texte théorique de la leçon...',
+    minHeight: 220,
+    uploadImage: uploadTeacherContentImage
+  }).then(ed => { lessonEditor = ed; })
+    .catch(err => { document.getElementById(`newLessonContent-${moduleId}`).textContent = err.message || "L'éditeur n'a pas pu être chargé."; });
 
   box.querySelectorAll('[data-action="delete-lesson"]').forEach(btn => btn.addEventListener('click', async () => {
     if (!(await showConfirm('Supprimer cette leçon ?'))) return;
@@ -1313,8 +1325,9 @@ async function loadLessons(moduleId, box){
 
   box.querySelector('[data-action="add-lesson"]').addEventListener('click', async () => {
     const title = document.getElementById(`newLessonTitle-${moduleId}`).value.trim();
-    const content = document.getElementById(`newLessonContent-${moduleId}`).innerHTML.trim();
-    const contentText = document.getElementById(`newLessonContent-${moduleId}`).innerText.trim();
+    if (!lessonEditor){ showAlert("L'éditeur est encore en cours de chargement, réessayez dans un instant."); return; }
+    const content = lessonEditor.getHTML();
+    const contentText = lessonEditor.getText();
     if (!title || !contentText){ showAlert('Titre et texte théorique obligatoires.'); return; }
 
     const addBtn = box.querySelector('[data-action="add-lesson"]');

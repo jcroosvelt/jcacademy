@@ -340,6 +340,16 @@ img{max-width:100%;display:block;}
 .course-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
 .badge-free{background:#E4F7EE;color:var(--success);}
+.start-box{background:var(--navy-soft);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center;}
+.start-box .start-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--navy);}
+.start-box .start-date{font-size:15px;font-weight:700;color:var(--navy-dark);margin:4px 0 10px;}
+.countdown{display:flex;justify-content:center;gap:8px;}
+.countdown div{background:#fff;border-radius:8px;padding:6px 0;min-width:52px;}
+.countdown b{display:block;font-size:18px;color:var(--navy-dark);line-height:1.1;}
+.countdown span{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;}
+.soon-pill{display:inline-block;background:var(--gold);color:var(--navy-dark);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;margin-top:12px;}
+.enroll-note{font-size:12.5px;color:var(--text-muted);margin:8px 0 0;text-align:center;line-height:1.5;}
+.link-btn{background:none;border:none;color:var(--navy);font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit;}
 .badge-paid{background:#FDF0DA;color:#B57200;}
 .badge-diplome{background:var(--navy-soft);color:var(--navy);}
 .badge-certificat{background:#FBEAD2;color:#8A5A00;}
@@ -639,11 +649,17 @@ footer a:hover{color:var(--gold);}
         <span id="dTeacher"></span>
       </div>
       <div id="dRatingSummary" style="margin-top:10px;color:#fff;font-size:14px;"></div>
+      <span class="soon-pill hidden" id="dSoonPill"></span>
     </div>
 
     <div class="course-side-card">
       <div class="video-frame" id="dThumbFrame">
         <span>Aperçu du cours</span>
+      </div>
+      <div class="start-box hidden" id="dStartBox">
+        <div class="start-label">Pré-inscription ouverte</div>
+        <div class="start-date" id="dStartDateText"></div>
+        <div class="countdown" id="dCountdown"></div>
       </div>
       <div style="font-size:26px;font-weight:800;color:var(--navy-dark);margin-bottom:14px;" id="dPrice">—</div>
       <div id="dEnrollArea">
@@ -651,6 +667,7 @@ footer a:hover{color:var(--gold);}
       </div>
       <button class="btn btn-outline btn-block" id="shareCourseBtn" data-share-type="course" style="margin-top:10px;">Partager ce cours</button>
       <ul class="sidebar-list">
+        <li class="hidden" id="dStartRow"><span>Début du cours</span><b id="dStartRowText">—</b></li>
         <li><span>Langue du cours</span><b id="dLanguage">—</b></li>
         <li><span>Type de parcours</span><b id="dTrackText">—</b></li>
         <li><span>Modules</span><b id="dModuleCount">—</b></li>
@@ -841,17 +858,112 @@ let currentSession = null;
   document.getElementById('dModuleCount').textContent = (modules || []).length;
   loadReviews(course.id);
 
+  const notStarted = courseNotStarted(course);
+  if (notStarted) renderStartInfo(course);
+
   if (session){
     const { data: enrollment } = await supabase.from('enrollments').select('id').eq('course_id', course.id).eq('user_id', session.user.id).maybeSingle();
     if (enrollment){
-      document.getElementById('enrolledBanner').classList.remove('hidden');
-      document.getElementById('dEnrollArea').innerHTML = '<a href="dashboard-etudiant.html" class="btn btn-primary btn-block">Continuer le cours</a>';
+      const banner = document.getElementById('enrolledBanner');
+      banner.classList.remove('hidden');
+      if (notStarted){
+        banner.querySelector('span').textContent = `Vous êtes inscrit. Le cours commence le ${formatStartDate(course.start_date)}.`;
+        banner.querySelector('a').textContent = 'Mon espace';
+        document.getElementById('dEnrollArea').innerHTML = '<a href="dashboard-etudiant.html" class="btn btn-primary btn-block">Voir dans mon espace</a><p class="enroll-note">Vous recevrez l\'accès aux leçons à la date de début.</p>';
+      } else {
+        document.getElementById('dEnrollArea').innerHTML = '<a href="dashboard-etudiant.html" class="btn btn-primary btn-block">Continuer le cours</a>';
+      }
       return;
     }
   }
 
-  setupEnrollButton(course);
+  if (notStarted) setupPreEnrollment(course, session);
+  else setupEnrollButton(course);
 })();
+
+/* ===== Pre-inscription (cours dont la date de debut n'est pas encore arrivee) ===== */
+function courseNotStarted(course){
+  return !!course.start_date && new Date(course.start_date).getTime() > Date.now();
+}
+function formatStartDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) +
+    ' à ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+function renderStartInfo(course){
+  document.getElementById('dStartBox').classList.remove('hidden');
+  document.getElementById('dStartDateText').textContent = 'Début : ' + formatStartDate(course.start_date);
+  document.getElementById('dStartRow').classList.remove('hidden');
+  document.getElementById('dStartRowText').textContent = new Date(course.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
+  const pill = document.getElementById('dSoonPill');
+  pill.textContent = 'Bientôt disponible';
+  pill.classList.remove('hidden');
+  const cd = document.getElementById('dCountdown');
+  const target = new Date(course.start_date).getTime();
+  const tick = () => {
+    const diff = target - Date.now();
+    if (diff <= 0){ clearInterval(timer); window.location.reload(); return; }
+    const d = Math.floor(diff / 86400000), h = Math.floor(diff / 3600000) % 24, m = Math.floor(diff / 60000) % 60, sec = Math.floor(diff / 1000) % 60;
+    cd.innerHTML = [[d,'jours'],[h,'heures'],[m,'min'],[sec,'sec']].map(([v,l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+}
+
+async function setupPreEnrollment(course, session){
+  const area = document.getElementById('dEnrollArea');
+  const loginUrl = 'login.html';
+
+  /* Cours gratuit : la pre-inscription est une inscription normale, leçons verrouillees jusqu'a la date */
+  if (!(course.price > 0)){
+    area.innerHTML = `<button class="btn btn-primary btn-block" id="preEnrollBtn" type="button">Me pré-inscrire gratuitement</button>
+      <p class="enroll-note">Votre place est enregistrée tout de suite. Les leçons s'ouvrent le jour du début.</p>`;
+    document.getElementById('preEnrollBtn').addEventListener('click', async (e) => {
+      if (!session){ window.location.href = loginUrl; return; }
+      e.target.disabled = true; e.target.textContent = 'Inscription...';
+      const { error } = await supabase.from('enrollments').insert({ user_id: session.user.id, course_id: course.id, progress: 0 });
+      if (error){ await showAlert('Erreur : ' + error.message); e.target.disabled = false; e.target.textContent = 'Me pré-inscrire gratuitement'; return; }
+      window.location.href = 'dashboard-etudiant.html';
+    });
+    return;
+  }
+
+  /* Cours payant : reservation gratuite, paiement avant le debut */
+  let reserved = false;
+  if (session){
+    const { data: r } = await supabase.from('course_reservations').select('id').eq('course_id', course.id).eq('user_id', session.user.id).maybeSingle();
+    reserved = !!r;
+  }
+  const payUrl = `checkout.html?type=course&slug=${encodeURIComponent(course.slug)}`;
+
+  if (reserved){
+    area.innerHTML = `<div class="enrolled-banner" style="margin-bottom:10px;justify-content:center;">Votre place est réservée</div>
+      <a href="${payUrl}" class="btn btn-primary btn-block">Payer maintenant — ${course.price} HTG</a>
+      <p class="enroll-note">Payez avant le début pour accéder au cours dès le premier jour.<br><button class="link-btn" id="cancelReservationBtn" type="button">Annuler ma réservation</button></p>`;
+    document.getElementById('cancelReservationBtn').addEventListener('click', async () => {
+      if (!(await showConfirm('Annuler votre réservation pour ce cours ?'))) return;
+      const { error } = await supabase.from('course_reservations').delete().eq('course_id', course.id).eq('user_id', session.user.id);
+      if (error){ await showAlert('Erreur : ' + error.message); return; }
+      setupPreEnrollment(course, session);
+    });
+    return;
+  }
+
+  area.innerHTML = `<button class="btn btn-primary btn-block" id="reserveBtn" type="button">Réserver ma place gratuitement</button>
+    <p class="enroll-note">Aucun paiement maintenant. Vous paierez ${course.price} HTG avant le début du cours.<br>
+    <a href="${payUrl}" style="color:var(--navy);font-weight:600;">Ou payer dès maintenant</a></p>`;
+  document.getElementById('reserveBtn').addEventListener('click', async (e) => {
+    if (!session){ window.location.href = loginUrl; return; }
+    e.target.disabled = true; e.target.textContent = 'Réservation...';
+    const { error } = await supabase.from('course_reservations').insert({ course_id: course.id, user_id: session.user.id });
+    if (error && !/duplicate|unique/i.test(error.message)){
+      await showAlert('Erreur : ' + error.message);
+      e.target.disabled = false; e.target.textContent = 'Réserver ma place gratuitement';
+      return;
+    }
+    setupPreEnrollment(course, session);
+  });
+}
 
 function renderCourse(course){
   document.title = course.title + ' — JC Academy';
@@ -922,6 +1034,9 @@ async function loadReviews(courseId){
 function renderModules(modules, course){
   const wrap = document.getElementById('modulesAccordion');
   if (!modules.length){ wrap.innerHTML = '<p class="empty-state">Le programme de ce cours sera bientôt disponible.</p>'; return; }
+  const lockedText = courseNotStarted(course)
+    ? 'Disponible à partir du ' + new Date(course.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })
+    : 'Inscrivez-vous pour débloquer';
 
   wrap.innerHTML = modules.map((m, i) => `
     <div class="module">
@@ -939,7 +1054,7 @@ function renderModules(modules, course){
             <div class="step-content">
               <h5>${escapeHtml(l.title)}</h5>
               <p>Texte théorique${l.has_video ? ' + vidéo' : ''}</p>
-              <span class="locked-text">Inscrivez-vous pour débloquer</span>
+              <span class="locked-text">${lockedText}</span>
             </div>
           </div>
         `).join('')}
@@ -948,7 +1063,7 @@ function renderModules(modules, course){
             <span class="step-icon locked">&#128274;</span>
             <div class="step-content">
               <h5>Quiz du module</h5>
-              <span class="locked-text">Inscrivez-vous pour débloquer</span>
+              <span class="locked-text">${lockedText}</span>
             </div>
           </div>
         ` : ''}
@@ -1000,6 +1115,7 @@ function setupEnrollButton(course){
 </script>
 <script src="share.js"></script>
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

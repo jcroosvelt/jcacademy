@@ -341,6 +341,7 @@ img{max-width:100%;display:block;}
 .course-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
 .badge-free{background:#E4F7EE;color:var(--success);}
+.badge-soon{background:var(--navy);color:#fff;}
 .badge-paid{background:#FDF0DA;color:#B57200;}
 .badge-lang{background:#E7ECF7;color:var(--navy);}
 .badge-diplome{background:var(--navy-soft);color:var(--navy);}
@@ -765,6 +766,11 @@ function applyFilterToQuery(query){
   return query;
 }
 
+function soonBadge(c){
+  if (!c.start_date || new Date(c.start_date).getTime() <= Date.now()) return '';
+  const d = new Date(c.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+  return `<span class="badge badge-soon">Bientôt · ${d}</span>`;
+}
 async function loadCourses(){
   const grid = document.getElementById('courseGrid');
   grid.innerHTML = '<p class="small-muted">Chargement...</p>';
@@ -791,6 +797,7 @@ async function loadCourses(){
       </div>
       <div class="course-body">
         <div class="course-tags">
+          ${soonBadge(c)}
           <span class="badge ${c.price > 0 ? 'badge-paid' : 'badge-free'}">${c.price > 0 ? 'Payant' : 'Gratuit'}</span>
           <span class="badge ${c.track === 'diplome' ? 'badge-diplome' : 'badge-certificat'}">${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}</span>
           <span class="badge badge-lang">${languageLabel(c.language)}</span>
@@ -858,6 +865,7 @@ if (params.get('type') === 'certificat' || params.get('type') === 'diplome'){
 loadCourses();
 </script>
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

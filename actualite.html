@@ -731,6 +731,58 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<
 function formatDate(iso){ return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }); }
 document.getElementById('navBurger').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
 
+/* Assainit le HTML du corps de l'article (adapte de sanitizeLessonHtml du
+   dashboard etudiant) : on garde la mise en forme et les images, on retire
+   tout le reste (scripts, styles, evenements onclick, iframes...). */
+const RICH_ALLOWED = ['B','I','U','STRONG','EM','UL','OL','LI','BR','P','A','DIV','SPAN','H2','H3','BLOCKQUOTE','IMG','FIGURE','FIGCAPTION'];
+const RICH_DROP = ['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','NOSCRIPT','TEMPLATE','SVG','MATH','FORM','INPUT','BUTTON','TEXTAREA','SELECT','LINK','META'];
+function safeUrl(url, allowMailto){
+  const u = (url || '').trim();
+  if (/^https:\/\//i.test(u) || /^http:\/\//i.test(u)) return u;
+  if (allowMailto && /^mailto:/i.test(u)) return u;
+  return '';
+}
+function sanitizeRichHtml(html){
+  const doc = new DOMParser().parseFromString(html || '', 'text/html');
+  (function clean(node){
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === 8){ child.remove(); return; }
+      if (child.nodeType !== 1) return;
+      const tag = child.tagName;
+      if (RICH_DROP.includes(tag)){ child.remove(); return; }
+      if (!RICH_ALLOWED.includes(tag)){
+        clean(child);
+        child.replaceWith(...child.childNodes);
+        return;
+      }
+      const href = child.getAttribute('href');
+      const src = child.getAttribute('src');
+      const alt = child.getAttribute('alt');
+      [...child.attributes].forEach(attr => child.removeAttribute(attr.name));
+      if (tag === 'A'){
+        const ok = safeUrl(href, true);
+        if (ok){ child.setAttribute('href', ok); child.setAttribute('target', '_blank'); child.setAttribute('rel', 'noopener noreferrer'); }
+      }
+      if (tag === 'IMG'){
+        const ok = safeUrl(src, false);
+        if (!ok){ child.remove(); return; }
+        child.setAttribute('src', ok);
+        child.setAttribute('alt', alt || '');
+        child.setAttribute('loading', 'lazy');
+      }
+      clean(child);
+    });
+  })(doc.body);
+  return doc.body.innerHTML;
+}
+/* Les anciens articles ont ete saisis en texte brut (sans balises) :
+   on les transforme en paragraphes pour qu'ils restent lisibles. */
+function renderArticleBody(body){
+  const raw = body || '';
+  if (/<\/?[a-z][^>]*>/i.test(raw)) return sanitizeRichHtml(raw);
+  return raw.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
+    .map(p => `<p>${escapeHtml(p).replace(/\n/g, '<br>')}</p>`).join('');
+}
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('slug');
 const wrap = document.getElementById('articleContent');
@@ -756,7 +808,7 @@ const wrap = document.getElementById('articleContent');
       ${data.cover_url ? `<div class="article-cover" style="background-image:url(${data.cover_url});"></div>` : ''}
       <h1>${escapeHtml(data.title)}</h1>
       <div class="meta">${data.author_name ? "Par " + escapeHtml(data.author_name) + " · " : ""}${formatDate(data.created_at)}</div>
-      <div class="body-text">${escapeHtml(data.body || data.excerpt || '')}</div>
+      <div class="article-body-content">${renderArticleBody(data.body || data.excerpt || '')}</div>
       <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
         <a href="actualites.html" class="btn btn-outline">&#8592; Retour aux actualités</a>
         <button class="btn btn-primary" id="shareNewsBtn" data-share-type="actualite">Partager cette actualité</button>
@@ -770,6 +822,7 @@ const wrap = document.getElementById('articleContent');
 </script>
 <script src="share.js"></script>
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

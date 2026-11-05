@@ -659,6 +659,8 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
         <a href="#" data-tab="teachers">Candidatures formateurs</a>
         <a href="#" data-tab="certificates">Certificats</a>
         <a href="#" data-tab="users">Utilisateurs</a>
+        <a href="#" data-tab="stats">Statistiques &amp; revenus</a>
+        <a href="#" data-tab="forms">Formulaires</a>
         <a href="#" data-tab="products">Produits numériques</a>
         <a href="#" data-tab="messages">Messages</a>
         <a href="#" data-tab="content">Blog & Actualités</a>
@@ -710,6 +712,104 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
         </div>
       </section>
 
+      <section id="tab-stats" class="tab-panel hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0;">Statistiques &amp; revenus</h3>
+          <button class="btn btn-outline btn-sm" id="statsRefreshBtn" type="button">Actualiser</button>
+        </div>
+        <p class="small-muted" id="statsLiveStatus" style="margin:0 0 20px;">Chargement...</p>
+        <div class="dash-stats" id="revenueCards">
+          <div class="dash-stat-card"><b>—</b><span>Ventes de cours (brut)</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Ventes de produits (brut)</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Part des formateurs</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Revenu JC Academy</span></div>
+        </div>
+
+        <h4 style="margin:8px 0 10px;">Revenus par formateur</h4>
+        <div class="table-wrap" style="margin-bottom:32px;">
+          <table class="data-table">
+            <thead><tr><th>Formateur</th><th>Inscrits</th><th>Cours vendus</th><th>Brut cours</th><th>Produits vendus</th><th>Brut produits</th><th>Part formateur</th><th>Part JC Academy</th></tr></thead>
+            <tbody id="statsTeachersBody"><tr><td colspan="8">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:8px 0 10px;">Inscrits par cours / formation</h4>
+        <div class="table-wrap" style="margin-bottom:32px;">
+          <table class="data-table">
+            <thead><tr><th>Cours</th><th>Formateur</th><th>Statut</th><th>Prix</th><th>Inscrits</th><th>Ventes payées</th><th>Revenu brut</th></tr></thead>
+            <tbody id="statsCoursesBody"><tr><td colspan="7">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+
+        <h4 style="margin:8px 0 10px;">Achats de produits numériques</h4>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Produit</th><th>Vendeur</th><th>Prix</th><th>Achats payés</th><th>Revenu brut</th><th>Part vendeur (80 %)</th><th>Commission (20 %)</th></tr></thead>
+            <tbody id="statsProductsBody"><tr><td colspan="7">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+        <p class="small-muted" style="margin-top:16px;">Seules les commandes au statut « payé » sont comptées. Commission JC Academy : 30 % sur les cours, 20 % sur les produits numériques. Ce qui est vendu par un compte admin revient entièrement à JC Academy.</p>
+      </section>
+
+      <section id="tab-forms" class="tab-panel hidden">
+        <div id="formsListView">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <h3 style="margin:0;">Formulaires</h3>
+            <button class="btn btn-primary btn-sm" id="newFormBtn" type="button">+ Nouveau formulaire</button>
+          </div>
+          <div id="formsList"><p class="small-muted">Chargement...</p></div>
+        </div>
+
+        <div id="formEditorView" class="hidden">
+          <button class="btn-mini" id="fmBackBtn" type="button" style="margin-bottom:16px;">&#8592; Retour aux formulaires</button>
+          <h3 id="formEditorTitle" style="margin-top:0;">Nouveau formulaire</h3>
+          <div class="editor-card">
+            <div class="form-group"><label>Titre</label><input type="text" id="fmTitle" maxlength="200" placeholder="Ex : Inscription à l'atelier du 15 novembre"></div>
+            <div class="form-group"><label>Description (facultatif)</label><textarea id="fmDesc" maxlength="5000" placeholder="Expliquez le but du formulaire..."></textarea></div>
+            <div class="form-group"><label>Message après envoi (facultatif)</label><textarea id="fmSuccess" maxlength="1000" placeholder="Merci, votre réponse a bien été enregistrée."></textarea></div>
+          </div>
+
+          <h4 style="margin:0 0 10px;">Questions</h4>
+          <div id="fmFields"></div>
+          <div class="editor-card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;">
+            <select id="fmNewFieldType" style="flex:1;min-width:160px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;">
+              <option value="text">Réponse courte</option><option value="paragraph">Paragraphe</option><option value="email">Email</option>
+              <option value="phone">Téléphone</option><option value="number">Nombre</option><option value="date">Date</option>
+              <option value="choice">Choix unique</option><option value="checkboxes">Cases à cocher</option><option value="dropdown">Liste déroulante</option>
+              <option value="section">Titre de section</option>
+            </select>
+            <button class="btn btn-outline btn-sm" id="fmAddFieldBtn" type="button">+ Ajouter</button>
+          </div>
+
+          <h4 style="margin:20px 0 10px;">Paramètres</h4>
+          <div class="editor-card">
+            <div class="form-group"><label>Statut</label>
+              <select id="fmStatus"><option value="brouillon">Brouillon (invisible)</option><option value="publie">Publié (accessible par le lien)</option></select>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:10px;"><input type="checkbox" id="fmAccepting" checked> Accepter les réponses</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:10px;"><input type="checkbox" id="fmRequireLogin"> Réservé aux personnes connectées</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-bottom:14px;"><input type="checkbox" id="fmOnePerUser"> Une seule réponse par personne (nécessite la connexion)</label>
+            <div class="form-group" style="margin-bottom:0;"><label>Fermeture automatique (facultatif)</label>
+              <input type="datetime-local" id="fmClosesAt" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;box-sizing:border-box;">
+            </div>
+          </div>
+          <p id="formEditorMsg" style="display:none;font-size:13.5px;word-break:break-all;"></p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:30px;">
+            <button class="btn btn-primary" id="fmSaveBtn" type="button">Enregistrer</button>
+            <button class="btn btn-outline" id="fmPreviewBtn" type="button">Ouvrir le formulaire</button>
+          </div>
+        </div>
+
+        <div id="formResponsesView" class="hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn-mini" id="frBackBtn" type="button">&#8592; Retour aux formulaires</button>
+            <button class="btn btn-outline btn-sm" id="frExportBtn" type="button">Exporter en CSV (Excel)</button>
+          </div>
+          <h3 id="formResponsesTitle" style="margin-top:0;">Réponses</h3>
+          <div id="formResponsesBody"></div>
+        </div>
+      </section>
+
       <section id="tab-products" class="tab-panel hidden">
         <h3>Produits numériques</h3>
         <div id="productsList"><p class="small-muted">Chargement...</p></div>
@@ -737,7 +837,28 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
           <div class="form-group"><label>Titre</label><input type="text" id="cTitle"></div>
           <div class="form-group"><label>Auteur</label><input type="text" id="cAuthor" placeholder="Ex : JC Roosvelt"></div>
           <div class="form-group"><label>Extrait (résumé affiché sur les cartes)</label><textarea id="cExcerpt" style="min-height:70px;"></textarea></div>
-          <div class="form-group"><label>Contenu complet</label><textarea id="cBody" style="min-height:180px;"></textarea></div>
+          <div class="form-group">
+            <label>Contenu complet</label>
+            <div class="rte-toolbar" id="cBodyToolbar">
+              <button type="button" data-cmd="bold" title="Gras"><b>B</b></button>
+              <button type="button" data-cmd="italic" title="Italique"><i>I</i></button>
+              <button type="button" data-cmd="underline" title="Souligné"><u>U</u></button>
+              <div class="rte-sep"></div>
+              <button type="button" data-cmd="formatBlock" data-value="h2" title="Grand intertitre" style="width:auto;padding:0 8px;font-weight:700;">T1</button>
+              <button type="button" data-cmd="formatBlock" data-value="h3" title="Petit intertitre" style="width:auto;padding:0 8px;font-weight:700;">T2</button>
+              <button type="button" data-cmd="formatBlock" data-value="p" title="Paragraphe normal" style="width:auto;padding:0 8px;">¶</button>
+              <button type="button" data-cmd="formatBlock" data-value="blockquote" title="Citation" style="font-weight:700;">&ldquo;</button>
+              <div class="rte-sep"></div>
+              <button type="button" data-cmd="insertUnorderedList" title="Liste à puces">&#8226;</button>
+              <button type="button" data-cmd="insertOrderedList" title="Liste numérotée">1.</button>
+              <div class="rte-sep"></div>
+              <button type="button" data-cmd="createLink" title="Lien">&#128279;</button>
+              <button type="button" data-cmd="insertImage" title="Insérer une image" style="width:auto;padding:0 10px;">Image</button>
+            </div>
+            <div class="rte-content" id="cBodyEditor" contenteditable="true"></div>
+            <input type="file" accept="image/*" class="file-input-hidden" id="cBodyImageInput">
+            <p class="small-muted" id="cBodyImageStatus" style="margin:6px 0 0;"></p>
+          </div>
           <div class="form-group">
             <label>Image de couverture</label>
             <div class="upload-box" id="cCoverBox">Cliquez pour choisir une image</div>
@@ -919,9 +1040,12 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<
 async function sendEmail(template, to, data){
   if (!to) return;
   try {
+    /* send-email n'accepte que le serveur ou un admin connecte : on envoie le jeton de session */
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
     await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ template, to, data })
     });
   } catch (_e) { /* best-effort, on n'affiche pas d'erreur a l'admin pour ca */ }
@@ -960,7 +1084,7 @@ document.querySelectorAll('.dash-nav a[data-tab]').forEach(link => {
     if (!loaded[tab]){
       loaded[tab] = true;
       ({courses: loadCourses, teachers: loadTeachers, certificates: loadCertificates,
-        users: loadUsers, products: loadProducts, messages: loadMessages,
+        users: loadUsers, products: loadProducts, messages: loadMessages, stats: loadStats, forms: loadForms,
         content: loadContentList, gallery: loadGallery, settings: loadSettings, pages: loadPageEditor})[tab]?.();
     }
   });
@@ -981,12 +1105,516 @@ async function loadOverview(){
   cards[3].textContent = usersCount.count ?? 0;
 }
 
+/* ---- Formulaires (type Google Forms) ---- */
+const FORM_FIELD_TYPES = {
+  text: 'Réponse courte', paragraph: 'Paragraphe', email: 'Email', phone: 'Téléphone',
+  number: 'Nombre', date: 'Date', choice: 'Choix unique', checkboxes: 'Cases à cocher',
+  dropdown: 'Liste déroulante', section: 'Titre de section'
+};
+const FORM_TYPES_WITH_OPTIONS = ['choice', 'checkboxes', 'dropdown'];
+let formEditing = null; // { id|null, slug, fields:[] }
+
+function formPublicUrl(slug){ return `${window.location.origin}/form/${slug}`; }
+function newFieldId(){ return 'f' + Math.random().toString(36).slice(2, 9); }
+function formSlugify(t){
+  return (t || 'formulaire').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'formulaire';
+}
+function showFormsView(view){
+  ['formsListView', 'formEditorView', 'formResponsesView'].forEach(id => document.getElementById(id).classList.toggle('hidden', id !== view));
+}
+
+async function loadForms(){
+  showFormsView('formsListView');
+  const wrap = document.getElementById('formsList');
+  wrap.innerHTML = '<p class="small-muted">Chargement...</p>';
+  const { data: forms, error } = await supabase.from('forms').select('id, slug, title, status, accepting, closes_at, created_at').order('created_at', { ascending: false });
+  if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
+  if (!forms.length){ wrap.innerHTML = '<p class="empty-state">Aucun formulaire pour le moment. Cliquez sur « Nouveau formulaire » pour commencer.</p>'; return; }
+  const counts = {};
+  await Promise.all(forms.map(async f => {
+    const { count } = await supabase.from('form_responses').select('id', { count: 'exact', head: true }).eq('form_id', f.id);
+    counts[f.id] = count || 0;
+  }));
+  wrap.innerHTML = forms.map(f => {
+    const closed = !f.accepting || (f.closes_at && new Date(f.closes_at).getTime() <= Date.now());
+    const pill = f.status !== 'publie' ? '<span class="status-pill pending">Brouillon</span>'
+      : closed ? '<span class="status-pill blocked">Fermé</span>' : '<span class="status-pill ok">Ouvert</span>';
+    return `
+    <div class="content-row">
+      <div style="min-width:0;flex:1;">
+        <h4>${escapeHtml(f.title)} ${pill}</h4>
+        <div class="meta">${counts[f.id]} réponse(s) · créé le ${formatDate(f.created_at)}</div>
+        ${f.status === 'publie' ? `<div class="meta" style="word-break:break-all;">${escapeHtml(formPublicUrl(f.slug))}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-mini" data-form-action="responses" data-id="${f.id}">Réponses (${counts[f.id]})</button>
+        <button class="btn-mini" data-form-action="edit" data-id="${f.id}">Modifier</button>
+        ${f.status === 'publie' ? `<button class="btn-mini" data-form-action="copy" data-slug="${escapeHtml(f.slug)}">Copier le lien</button>` : ''}
+        <button class="btn-mini" data-form-action="delete" data-id="${f.id}" style="color:#C0392B;">Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('[data-form-action]').forEach(b => b.addEventListener('click', async () => {
+    const act = b.dataset.formAction;
+    if (act === 'edit') openFormEditor(b.dataset.id);
+    if (act === 'responses') openFormResponses(b.dataset.id);
+    if (act === 'copy'){
+      const url = formPublicUrl(b.dataset.slug);
+      try { await navigator.clipboard.writeText(url); b.textContent = 'Lien copié'; setTimeout(() => { b.textContent = 'Copier le lien'; }, 2000); }
+      catch (_e){ await showPrompt('Copiez ce lien :', url); }
+    }
+    if (act === 'delete'){
+      if (!(await showConfirm('Supprimer ce formulaire et toutes ses réponses ? Cette action est définitive.'))) return;
+      const { error: delErr } = await supabase.from('forms').delete().eq('id', b.dataset.id);
+      if (delErr){ await showAlert('Erreur : ' + delErr.message); return; }
+      loadForms();
+    }
+  }));
+}
+
+/* ----- Editeur ----- */
+async function openFormEditor(id){
+  showFormsView('formEditorView');
+  document.getElementById('formEditorMsg').style.display = 'none';
+  if (!id){
+    formEditing = { id: null, slug: null, fields: [{ id: newFieldId(), type: 'text', label: 'Nom complet', help: '', required: true, options: [] }] };
+    document.getElementById('formEditorTitle').textContent = 'Nouveau formulaire';
+    document.getElementById('fmTitle').value = '';
+    document.getElementById('fmDesc').value = '';
+    document.getElementById('fmSuccess').value = '';
+    document.getElementById('fmStatus').value = 'brouillon';
+    document.getElementById('fmAccepting').checked = true;
+    document.getElementById('fmRequireLogin').checked = false;
+    document.getElementById('fmOnePerUser').checked = false;
+    document.getElementById('fmClosesAt').value = '';
+  } else {
+    const { data: f, error } = await supabase.from('forms').select('*').eq('id', id).single();
+    if (error){ await showAlert('Erreur : ' + error.message); loadForms(); return; }
+    formEditing = { id: f.id, slug: f.slug, fields: Array.isArray(f.fields) ? f.fields : [] };
+    document.getElementById('formEditorTitle').textContent = 'Modifier le formulaire';
+    document.getElementById('fmTitle').value = f.title;
+    document.getElementById('fmDesc').value = f.description || '';
+    document.getElementById('fmSuccess').value = f.success_message || '';
+    document.getElementById('fmStatus').value = f.status;
+    document.getElementById('fmAccepting').checked = f.accepting;
+    document.getElementById('fmRequireLogin').checked = f.require_login;
+    document.getElementById('fmOnePerUser').checked = f.one_per_user;
+    document.getElementById('fmClosesAt').value = formToLocalInput(f.closes_at);
+  }
+  syncOnePerUser();
+  renderFormFields();
+}
+function formToLocalInput(iso){
+  if (!iso) return '';
+  const d = new Date(iso), p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function syncOnePerUser(){
+  const login = document.getElementById('fmRequireLogin').checked;
+  const one = document.getElementById('fmOnePerUser');
+  one.disabled = !login;
+  if (!login) one.checked = false;
+}
+
+function renderFormFields(){
+  const wrap = document.getElementById('fmFields');
+  if (!formEditing.fields.length){ wrap.innerHTML = '<p class="empty-state">Aucune question. Ajoutez-en une ci-dessous.</p>'; return; }
+  wrap.innerHTML = formEditing.fields.map((f, i) => `
+    <div class="editor-card" style="padding:16px;margin-bottom:12px;" data-idx="${i}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <strong style="font-size:13px;color:var(--text-muted);">${f.type === 'section' ? 'Section' : 'Question ' + (formEditing.fields.slice(0, i + 1).filter(x => x.type !== 'section').length)}</strong>
+        <div style="display:flex;gap:6px;">
+          <button type="button" class="btn-mini" data-fld="up" ${i === 0 ? 'disabled' : ''} title="Monter" style="padding:6px 10px;">&#8593;</button>
+          <button type="button" class="btn-mini" data-fld="down" ${i === formEditing.fields.length - 1 ? 'disabled' : ''} title="Descendre" style="padding:6px 10px;">&#8595;</button>
+          <button type="button" class="btn-mini" data-fld="dup" title="Dupliquer" style="padding:6px 10px;">Dupliquer</button>
+          <button type="button" class="btn-mini" data-fld="del" title="Supprimer" style="padding:6px 10px;color:#C0392B;">Supprimer</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;">
+        <select data-prop="type">${Object.entries(FORM_FIELD_TYPES).map(([k, v]) => `<option value="${k}" ${f.type === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
+      </div>
+      <div class="form-group" style="margin-bottom:10px;"><input type="text" data-prop="label" maxlength="300" placeholder="${f.type === 'section' ? 'Titre de la section' : 'Intitulé de la question'}" value="${escapeHtml(f.label || '')}"></div>
+      <div class="form-group" style="margin-bottom:10px;"><input type="text" data-prop="help" maxlength="500" placeholder="Texte d'aide (facultatif)" value="${escapeHtml(f.help || '')}"></div>
+      ${FORM_TYPES_WITH_OPTIONS.includes(f.type) ? `
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Options (une par ligne)</label>
+          <textarea data-prop="options" placeholder="Option 1&#10;Option 2&#10;Option 3">${escapeHtml((f.options || []).join('\n'))}</textarea>
+        </div>` : ''}
+      ${f.type !== 'section' ? `<label style="display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;"><input type="checkbox" data-prop="required" ${f.required ? 'checked' : ''}> Obligatoire</label>` : ''}
+    </div>`).join('');
+
+  wrap.querySelectorAll('[data-idx]').forEach(cardEl => {
+    const i = Number(cardEl.dataset.idx);
+    const fld = formEditing.fields[i];
+    cardEl.querySelectorAll('[data-prop]').forEach(inp => {
+      const prop = inp.dataset.prop;
+      const ev = (prop === 'type' || prop === 'required') ? 'change' : 'input';
+      inp.addEventListener(ev, () => {
+        if (prop === 'required') fld.required = inp.checked;
+        else if (prop === 'options') fld.options = inp.value.split('\n').map(s => s.trim()).filter(Boolean);
+        else fld[prop] = inp.value;
+        if (prop === 'type'){
+          if (FORM_TYPES_WITH_OPTIONS.includes(fld.type) && !(fld.options || []).length) fld.options = ['Option 1', 'Option 2'];
+          if (fld.type === 'section') fld.required = false;
+          renderFormFields();
+        }
+      });
+    });
+    cardEl.querySelectorAll('[data-fld]').forEach(b => b.addEventListener('click', async () => {
+      const a = b.dataset.fld, list = formEditing.fields;
+      if (a === 'up' && i > 0) [list[i - 1], list[i]] = [list[i], list[i - 1]];
+      if (a === 'down' && i < list.length - 1) [list[i + 1], list[i]] = [list[i], list[i + 1]];
+      if (a === 'dup') list.splice(i + 1, 0, { ...JSON.parse(JSON.stringify(list[i])), id: newFieldId() });
+      if (a === 'del'){
+        if (!(await showConfirm('Supprimer cette question ?'))) return;
+        list.splice(i, 1);
+      }
+      renderFormFields();
+    }));
+  });
+}
+
+function showFormEditorMsg(text, isError){
+  const el = document.getElementById('formEditorMsg');
+  el.textContent = text; el.style.color = isError ? '#C0392B' : '#1D9A6C'; el.style.display = 'block';
+}
+
+async function saveFormEditor(){
+  const title = document.getElementById('fmTitle').value.trim();
+  if (!title){ showFormEditorMsg('Le titre est obligatoire.', true); return; }
+  const fields = formEditing.fields.map(f => ({
+    id: f.id, type: f.type, label: (f.label || '').trim(), help: (f.help || '').trim(),
+    required: f.type === 'section' ? false : !!f.required,
+    options: FORM_TYPES_WITH_OPTIONS.includes(f.type) ? [...new Set((f.options || []).map(o => o.trim()).filter(Boolean))] : []
+  }));
+  const bad = fields.find(f => !f.label);
+  if (bad){ showFormEditorMsg('Chaque question doit avoir un intitulé.', true); return; }
+  const noOpt = fields.find(f => FORM_TYPES_WITH_OPTIONS.includes(f.type) && f.options.length < 2);
+  if (noOpt){ showFormEditorMsg(`La question « ${noOpt.label} » doit avoir au moins 2 options.`, true); return; }
+  if (!fields.some(f => f.type !== 'section')){ showFormEditorMsg('Ajoutez au moins une question.', true); return; }
+
+  const closesVal = document.getElementById('fmClosesAt').value;
+  const payload = {
+    title,
+    description: document.getElementById('fmDesc').value.trim(),
+    success_message: document.getElementById('fmSuccess').value.trim() || null,
+    status: document.getElementById('fmStatus').value,
+    accepting: document.getElementById('fmAccepting').checked,
+    require_login: document.getElementById('fmRequireLogin').checked,
+    one_per_user: document.getElementById('fmRequireLogin').checked && document.getElementById('fmOnePerUser').checked,
+    closes_at: closesVal ? new Date(closesVal).toISOString() : null,
+    fields
+  };
+  const btn = document.getElementById('fmSaveBtn');
+  btn.disabled = true;
+  let result;
+  if (formEditing.id){
+    result = await supabase.from('forms').update(payload).eq('id', formEditing.id).select().single();
+  } else {
+    payload.slug = formSlugify(title) + '-' + Math.random().toString(36).slice(2, 7);
+    payload.created_by = currentUser.id;
+    result = await supabase.from('forms').insert(payload).select().single();
+  }
+  btn.disabled = false;
+  if (result.error){ showFormEditorMsg('Erreur : ' + result.error.message, true); return; }
+  formEditing.id = result.data.id; formEditing.slug = result.data.slug;
+  document.getElementById('formEditorTitle').textContent = 'Modifier le formulaire';
+  showFormEditorMsg(result.data.status === 'publie'
+    ? 'Formulaire enregistré et publié. Lien : ' + formPublicUrl(result.data.slug)
+    : 'Brouillon enregistré. Passez le statut sur « Publié » pour le rendre accessible.', false);
+}
+
+/* ----- Reponses ----- */
+let formResponsesCtx = null;
+async function openFormResponses(id){
+  showFormsView('formResponsesView');
+  const body = document.getElementById('formResponsesBody');
+  body.innerHTML = '<p class="small-muted">Chargement...</p>';
+  const { data: f, error } = await supabase.from('forms').select('id, title, slug, fields').eq('id', id).single();
+  if (error){ body.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
+  let rows;
+  try {
+    rows = await fetchAllRows(() => supabase.from('form_responses').select('id, user_id, answers, created_at, profiles(full_name, email)').eq('form_id', id).order('created_at', { ascending: false }));
+  } catch (e){ body.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(e.message || String(e))}</p>`; return; }
+  const questions = (Array.isArray(f.fields) ? f.fields : []).filter(q => q.type !== 'section');
+  formResponsesCtx = { form: f, questions, rows };
+  document.getElementById('formResponsesTitle').textContent = `Réponses — ${f.title}`;
+  if (!rows.length){ body.innerHTML = '<p class="empty-state">Aucune réponse pour le moment.</p>'; return; }
+
+  const val = (r, q) => {
+    const v = r.answers?.[q.id]?.v;
+    return Array.isArray(v) ? v.join(', ') : (v ?? '');
+  };
+  /* Resume des questions a choix */
+  const summary = questions.filter(q => FORM_TYPES_WITH_OPTIONS.includes(q.type)).map(q => {
+    const counts = {}; (q.options || []).forEach(o => { counts[o] = 0; });
+    rows.forEach(r => {
+      const v = r.answers?.[q.id]?.v;
+      (Array.isArray(v) ? v : (v ? [v] : [])).forEach(x => { counts[x] = (counts[x] || 0) + 1; });
+    });
+    return `<div class="editor-card" style="padding:16px;">
+      <h4 style="margin:0 0 10px;font-size:14.5px;">${escapeHtml(q.label)}</h4>
+      ${Object.entries(counts).map(([o, n]) => {
+        const pct = rows.length ? Math.round(n * 100 / rows.length) : 0;
+        return `<div style="margin-bottom:8px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;gap:8px;"><span>${escapeHtml(o)}</span><span>${n} · ${pct} %</span></div>
+          <div style="height:8px;background:var(--surface);border-radius:999px;overflow:hidden;margin-top:4px;"><div style="height:100%;width:${pct}%;background:var(--navy);"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <p class="small-muted" style="margin:0 0 16px;">${rows.length} réponse(s)</p>
+    ${summary ? `<h4 style="margin:0 0 10px;">Résumé</h4>${summary}` : ''}
+    <h4 style="margin:20px 0 10px;">Toutes les réponses</h4>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Compte</th>${questions.map(q => `<th>${escapeHtml(q.label)}</th>`).join('')}<th></th></tr></thead>
+        <tbody>
+          ${rows.map(r => `<tr>
+            <td style="white-space:nowrap;">${formatDate(r.created_at)} ${new Date(r.created_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}</td>
+            <td>${r.profiles ? escapeHtml(r.profiles.full_name || r.profiles.email || '') : '<span class="small-muted">Anonyme</span>'}</td>
+            ${questions.map(q => `<td style="white-space:pre-wrap;max-width:320px;">${escapeHtml(String(val(r, q)))}</td>`).join('')}
+            <td><button class="btn-mini" data-del-response="${r.id}" style="padding:6px 10px;color:#C0392B;">Supprimer</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  body.querySelectorAll('[data-del-response]').forEach(b => b.addEventListener('click', async () => {
+    if (!(await showConfirm('Supprimer cette réponse ?'))) return;
+    const { error: delErr } = await supabase.from('form_responses').delete().eq('id', b.dataset.delResponse);
+    if (delErr){ await showAlert('Erreur : ' + delErr.message); return; }
+    openFormResponses(id);
+  }));
+}
+
+function exportFormResponsesCsv(){
+  if (!formResponsesCtx || !formResponsesCtx.rows.length){ showAlert('Aucune réponse à exporter.'); return; }
+  const { form, questions, rows } = formResponsesCtx;
+  const cell = (s) => {
+    let t = String(s ?? '');
+    if (/^[=+\-@]/.test(t)) t = "'" + t; // evite l'execution de formules a l'ouverture dans Excel
+    return '"' + t.replace(/"/g, '""') + '"';
+  };
+  const header = ['Date', 'Nom du compte', 'Email du compte', ...questions.map(q => q.label)];
+  const lines = rows.map(r => [
+    new Date(r.created_at).toLocaleString('fr-FR'),
+    r.profiles?.full_name || '', r.profiles?.email || '',
+    ...questions.map(q => { const v = r.answers?.[q.id]?.v; return Array.isArray(v) ? v.join(', ') : (v ?? ''); })
+  ]);
+  const csv = '\uFEFF' + [header, ...lines].map(l => l.map(cell).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reponses-${form.slug}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+document.getElementById('newFormBtn').addEventListener('click', () => openFormEditor(null));
+document.getElementById('fmAddFieldBtn').addEventListener('click', () => {
+  const type = document.getElementById('fmNewFieldType').value;
+  formEditing.fields.push({ id: newFieldId(), type, label: '', help: '', required: false, options: FORM_TYPES_WITH_OPTIONS.includes(type) ? ['Option 1', 'Option 2'] : [] });
+  renderFormFields();
+  const cards = document.querySelectorAll('#fmFields [data-idx]');
+  cards[cards.length - 1]?.querySelector('[data-prop="label"]')?.focus();
+});
+document.getElementById('fmRequireLogin').addEventListener('change', syncOnePerUser);
+document.getElementById('fmSaveBtn').addEventListener('click', saveFormEditor);
+document.getElementById('fmPreviewBtn').addEventListener('click', () => {
+  if (!formEditing.slug){ showFormEditorMsg('Enregistrez le formulaire avant de le prévisualiser.', true); return; }
+  if (document.getElementById('fmStatus').value !== 'publie'){ showFormEditorMsg('Seul un formulaire publié peut être ouvert : passez le statut sur « Publié » et enregistrez.', true); return; }
+  window.open(formPublicUrl(formEditing.slug), '_blank', 'noopener');
+});
+document.getElementById('fmBackBtn').addEventListener('click', () => loadForms());
+document.getElementById('frBackBtn').addEventListener('click', () => loadForms());
+document.getElementById('frExportBtn').addEventListener('click', exportFormResponsesCsv);
+
+/* ---- Statistiques & revenus ---- */
+const TEACHER_SHARE = 0.70;        // cours : 70 % formateur / 30 % JC Academy
+const PRODUCT_SELLER_SHARE = 0.80; // produits numeriques : 80 % vendeur / 20 % JC Academy
+let statsChannel = null;
+let statsReloadTimer = null;
+let statsLoading = false;
+
+function formatHTG(n){
+  return Number(n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' HTG';
+}
+/* Supabase renvoie au plus 1000 lignes par requete : on lit par paquets */
+async function fetchAllRows(buildQuery){
+  const pageSize = 1000;
+  let from = 0;
+  const rows = [];
+  while (true){
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+  return rows;
+}
+function statusLabel(st){
+  return ({publie:'Publié', en_attente:'En attente', brouillon:'Brouillon', rejete:'Rejeté'})[st] || (st || '—');
+}
+/* Part reversee au formateur/vendeur : rien si c'est un compte admin */
+function payoutShare(profile, share){ return profile?.role === 'admin' ? 0 : share; }
+
+async function loadStats(){
+  if (statsLoading) return;
+  statsLoading = true;
+  const liveEl = document.getElementById('statsLiveStatus');
+  try {
+    const [courses, enrollments, orders, products, productOrders] = await Promise.all([
+      fetchAllRows(() => supabase.from('courses').select('id, title, price, status, teacher_id, profiles(full_name, email, role)').order('created_at', { ascending: false })),
+      fetchAllRows(() => supabase.from('enrollments').select('course_id')),
+      fetchAllRows(() => supabase.from('orders').select('course_id, amount').eq('status', 'paye')),
+      fetchAllRows(() => supabase.from('digital_products').select('id, title, price, seller_id, profiles(full_name, email, role)').order('created_at', { ascending: false })),
+      fetchAllRows(() => supabase.from('product_orders').select('product_id, amount').eq('status', 'paye'))
+    ]);
+
+    const enrollCount = {};
+    enrollments.forEach(e => { enrollCount[e.course_id] = (enrollCount[e.course_id] || 0) + 1; });
+    const salesCount = {}, salesSum = {};
+    orders.forEach(o => {
+      salesCount[o.course_id] = (salesCount[o.course_id] || 0) + 1;
+      salesSum[o.course_id] = (salesSum[o.course_id] || 0) + Number(o.amount || 0);
+    });
+    const pCount = {}, pSum = {};
+    productOrders.forEach(o => {
+      pCount[o.product_id] = (pCount[o.product_id] || 0) + 1;
+      pSum[o.product_id] = (pSum[o.product_id] || 0) + Number(o.amount || 0);
+    });
+
+    const people = {};
+    function person(id, profile){
+      const key = id || 'inconnu';
+      if (!people[key]) people[key] = { name: profile?.full_name || 'Inconnu', email: profile?.email || '', isAdmin: profile?.role === 'admin',
+        enrolled: 0, courseSales: 0, courseGross: 0, productSales: 0, productGross: 0, payout: 0, platform: 0 };
+      return people[key];
+    }
+
+    /* Par cours */
+    const courseRows = courses.map(c => ({
+      c, enrolled: enrollCount[c.id] || 0, sales: salesCount[c.id] || 0, gross: salesSum[c.id] || 0
+    })).sort((a, b) => b.enrolled - a.enrolled || b.gross - a.gross);
+    courseRows.forEach(r => {
+      const t = person(r.c.teacher_id, r.c.profiles);
+      const share = payoutShare(r.c.profiles, TEACHER_SHARE);
+      t.enrolled += r.enrolled; t.courseSales += r.sales; t.courseGross += r.gross;
+      t.payout += r.gross * share; t.platform += r.gross * (1 - share);
+    });
+    document.getElementById('statsCoursesBody').innerHTML = courseRows.length ? courseRows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.c.title)}</td>
+        <td>${escapeHtml(r.c.profiles?.full_name || '—')}</td>
+        <td>${escapeHtml(statusLabel(r.c.status))}</td>
+        <td>${Number(r.c.price) > 0 ? formatHTG(r.c.price) : 'Gratuit'}</td>
+        <td><strong>${r.enrolled}</strong></td>
+        <td>${r.sales}</td>
+        <td>${formatHTG(r.gross)}</td>
+      </tr>`).join('') : '<tr><td colspan="7">Aucun cours.</td></tr>';
+
+    /* Produits numeriques */
+    const productRows = products.map(p => ({ p, count: pCount[p.id] || 0, sum: pSum[p.id] || 0 }))
+      .sort((a, b) => b.count - a.count || b.sum - a.sum);
+    productRows.forEach(r => {
+      const t = person(r.p.seller_id, r.p.profiles);
+      const share = payoutShare(r.p.profiles, PRODUCT_SELLER_SHARE);
+      t.productSales += r.count; t.productGross += r.sum;
+      t.payout += r.sum * share; t.platform += r.sum * (1 - share);
+    });
+    document.getElementById('statsProductsBody').innerHTML = productRows.length ? productRows.map(r => {
+      const share = payoutShare(r.p.profiles, PRODUCT_SELLER_SHARE);
+      return `
+      <tr>
+        <td>${escapeHtml(r.p.title)}</td>
+        <td>${escapeHtml(r.p.profiles?.full_name || '—')}${r.p.profiles?.role === 'admin' ? ' <span class="small-muted">(admin)</span>' : ''}</td>
+        <td>${Number(r.p.price) > 0 ? formatHTG(r.p.price) : 'Gratuit'}</td>
+        <td><strong>${r.count}</strong></td>
+        <td>${formatHTG(r.sum)}</td>
+        <td>${formatHTG(r.sum * share)}</td>
+        <td>${formatHTG(r.sum * (1 - share))}</td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7">Aucun produit.</td></tr>';
+
+    /* Par formateur (cours + produits) */
+    const teacherRows = Object.values(people).sort((a, b) => (b.courseGross + b.productGross) - (a.courseGross + a.productGross));
+    document.getElementById('statsTeachersBody').innerHTML = teacherRows.length ? teacherRows.map(t => `
+      <tr>
+        <td>${escapeHtml(t.name)}${t.isAdmin ? ' <span class="small-muted">(admin)</span>' : ''}${t.email ? `<br><span class="small-muted">${escapeHtml(t.email)}</span>` : ''}</td>
+        <td>${t.enrolled}</td>
+        <td>${t.courseSales}</td>
+        <td>${formatHTG(t.courseGross)}</td>
+        <td>${t.productSales}</td>
+        <td>${formatHTG(t.productGross)}</td>
+        <td><strong>${formatHTG(t.payout)}</strong></td>
+        <td>${formatHTG(t.platform)}</td>
+      </tr>`).join('') : '<tr><td colspan="8">Aucun formateur avec des cours ou des produits.</td></tr>';
+
+    /* Totaux (calcules sur toutes les commandes payees) */
+    const courseGross = orders.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+    const productGross = productOrders.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+    const payoutTotal = teacherRows.reduce((acc, t) => acc + t.payout, 0);
+    const cards = document.querySelectorAll('#revenueCards .dash-stat-card b');
+    cards[0].textContent = formatHTG(courseGross);
+    cards[1].textContent = formatHTG(productGross);
+    cards[2].textContent = formatHTG(payoutTotal);
+    cards[3].textContent = formatHTG(courseGross + productGross - payoutTotal);
+
+    liveEl.dataset.updated = new Date().toLocaleTimeString('fr-FR');
+    renderStatsLiveStatus();
+  } catch (err){
+    liveEl.textContent = 'Erreur de chargement : ' + (err?.message || err);
+    liveEl.style.color = '#C0392B';
+  } finally {
+    statsLoading = false;
+  }
+  startStatsRealtime();
+}
+
+function renderStatsLiveStatus(){
+  const el = document.getElementById('statsLiveStatus');
+  const updated = el.dataset.updated ? 'Dernière mise à jour : ' + el.dataset.updated + '. ' : '';
+  const live = el.dataset.live;
+  el.style.color = '';
+  el.textContent = updated + (live === 'on' ? 'Mise à jour automatique activée.'
+    : live === 'off' ? 'Mise à jour automatique indisponible : utilisez « Actualiser ».'
+    : 'Connexion au temps réel...');
+}
+
+/* Temps reel : on recharge (avec un petit delai) a chaque nouvelle
+   inscription, commande ou achat */
+function scheduleStatsReload(){
+  clearTimeout(statsReloadTimer);
+  statsReloadTimer = setTimeout(() => {
+    if (!document.getElementById('tab-stats').classList.contains('hidden')) loadStats();
+    else loaded.stats = false; // sera recharge a la prochaine ouverture de l'onglet
+  }, 1500);
+}
+function startStatsRealtime(){
+  if (statsChannel) return;
+  statsChannel = supabase.channel('admin-stats');
+  ['enrollments', 'orders', 'product_orders'].forEach(table => {
+    statsChannel.on('postgres_changes', { event: '*', schema: 'public', table }, scheduleStatsReload);
+  });
+  statsChannel.subscribe((status) => {
+    const el = document.getElementById('statsLiveStatus');
+    if (status === 'SUBSCRIBED') el.dataset.live = 'on';
+    else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') el.dataset.live = 'off';
+    renderStatsLiveStatus();
+  });
+}
+document.getElementById('statsRefreshBtn').addEventListener('click', () => loadStats());
+
 /* ---- Cours a valider ---- */
 async function loadCourses(){
   const wrap = document.getElementById('coursesList');
   const { data, error } = await supabase
     .from('courses')
-    .select('id, title, short_description, price, track, status, created_at, profiles(full_name, email)')
+    .select('id, title, short_description, price, track, status, created_at, start_date, profiles(full_name, email)')
     .eq('status', 'en_attente')
     .order('created_at', { ascending: true });
 
@@ -1003,6 +1631,7 @@ async function loadCourses(){
         <span class="badge badge-paid">En attente</span>
       </div>
       <p>${escapeHtml(c.short_description || '')}</p>
+      ${c.start_date && new Date(c.start_date).getTime() > Date.now() ? `<p style="color:var(--navy);font-weight:600;font-size:13px;">Pré-inscription · début le ${new Date(c.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })}</p>` : ''}
       <div class="review-actions">
         <button class="btn-approve" data-action="approve-course" data-id="${c.id}" data-email="${c.profiles?.email || ''}" data-name="${escapeHtml(c.profiles?.full_name || '')}" data-title="${escapeHtml(c.title)}">Approuver</button>
         <button class="btn-reject" data-action="reject-course" data-id="${c.id}" data-email="${c.profiles?.email || ''}" data-name="${escapeHtml(c.profiles?.full_name || '')}" data-title="${escapeHtml(c.title)}">Rejeter</button>
@@ -1239,6 +1868,79 @@ document.getElementById('cCoverInput').addEventListener('change', (e) => {
   }
 });
 
+/* ===== Editeur riche du corps des articles / actualites ===== */
+const cBodyEditor = document.getElementById('cBodyEditor');
+let cBodySavedRange = null;
+function escapeEditorText(t){ return (t||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* Les anciens contenus sont en texte brut : on les convertit en paragraphes */
+function bodyToEditorHtml(body){
+  if (!body) return '';
+  if (/<\/?[a-z][^>]*>/i.test(body)) return body;
+  return body.split(/\n{2,}/).map(p => p.trim()).filter(Boolean)
+    .map(p => '<p>' + escapeEditorText(p).replace(/\n/g, '<br>') + '</p>').join('');
+}
+function editorBodyHtml(){
+  const hasText = cBodyEditor.innerText.trim().length > 0;
+  const hasImg = !!cBodyEditor.querySelector('img');
+  return (hasText || hasImg) ? cBodyEditor.innerHTML.trim() : '';
+}
+function saveBodySelection(){
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount && cBodyEditor.contains(sel.getRangeAt(0).commonAncestorContainer)){
+    cBodySavedRange = sel.getRangeAt(0).cloneRange();
+  }
+}
+function restoreBodySelection(){
+  cBodyEditor.focus();
+  if (!cBodySavedRange) return;
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(cBodySavedRange);
+}
+['keyup','mouseup','touchend','input'].forEach(ev => cBodyEditor.addEventListener(ev, saveBodySelection));
+document.getElementById('cBodyToolbar').querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('mousedown', (e) => e.preventDefault());
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const cmd = btn.dataset.cmd;
+    if (cmd === 'insertImage'){
+      saveBodySelection();
+      document.getElementById('cBodyImageInput').click();
+      return;
+    }
+    if (cmd === 'createLink'){
+      saveBodySelection();
+      const url = await showPrompt('URL du lien (https://...) :');
+      restoreBodySelection();
+      if (url) document.execCommand('createLink', false, url.trim());
+      saveBodySelection();
+      return;
+    }
+    restoreBodySelection();
+    if (cmd === 'formatBlock') document.execCommand('formatBlock', false, '<' + btn.dataset.value + '>');
+    else document.execCommand(cmd, false, null);
+    saveBodySelection();
+  });
+});
+document.getElementById('cBodyImageInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const status = document.getElementById('cBodyImageStatus');
+  if (!file.type.startsWith('image/')){ status.textContent = 'Ce fichier n\'est pas une image.'; return; }
+  if (file.size > 5 * 1024 * 1024){ status.textContent = 'Image trop lourde (5 Mo maximum).'; return; }
+  status.textContent = 'Envoi de l\'image...';
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${currentUser.id}/body/${Date.now()}-${safeName}`;
+  const { error: upErr } = await supabase.storage.from('articles').upload(path, file, { upsert: false });
+  if (upErr){ status.textContent = 'Erreur upload image : ' + upErr.message; return; }
+  const url = supabase.storage.from('articles').getPublicUrl(path).data.publicUrl;
+  restoreBodySelection();
+  document.execCommand('insertHTML', false, '<p><img src="' + escapeEditorText(url) + '" alt=""></p><p><br></p>');
+  saveBodySelection();
+  status.textContent = 'Image insérée.';
+});
+
 function openContentEditor(item){
   editingContentId = item?.id || null;
   pendingCover = null;
@@ -1247,7 +1949,8 @@ function openContentEditor(item){
   document.getElementById('cTitle').value = item?.title || '';
   document.getElementById('cAuthor').value = item?.author_name || '';
   document.getElementById('cExcerpt').value = item?.excerpt || '';
-  document.getElementById('cBody').value = item?.body || '';
+  document.getElementById('cBodyEditor').innerHTML = bodyToEditorHtml(item?.body || '');
+  document.getElementById('cBodyImageStatus').textContent = '';
   document.getElementById('cCoverPreview').classList.toggle('show', !!item?.cover_url);
   if (item?.cover_url) document.getElementById('cCoverPreview').src = item.cover_url;
   document.getElementById('contentMsg').style.display = 'none';
@@ -1268,7 +1971,7 @@ async function saveContent(publish){
     title,
     author_name: document.getElementById('cAuthor').value.trim(),
     excerpt: document.getElementById('cExcerpt').value.trim(),
-    body: document.getElementById('cBody').value.trim(),
+    body: editorBodyHtml(),
     published: publish,
   };
 

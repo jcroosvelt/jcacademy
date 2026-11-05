@@ -111,5 +111,43 @@ function showConfirm(message){
   });
 }
 
+// showAlert('Message') -> remplace alert() nativement. Pas besoin de await :
+// contrairement a prompt/confirm, un simple message n'a rien a renvoyer.
+function showAlert(message){
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(12,44,116,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fff;border-radius:16px;padding:26px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25);font-family:Inter,sans-serif;';
+
+  const isError = /erreur/i.test(message);
+
+  const msg = document.createElement('p');
+  msg.textContent = message;
+  msg.style.cssText = `margin:0 0 20px;font-size:15px;font-weight:600;line-height:1.5;color:${isError ? '#C0392B' : '#14213D'};`;
+
+  const okBtn = document.createElement('button');
+  okBtn.type = 'button';
+  okBtn.textContent = 'OK';
+  okBtn.style.cssText = 'background:#0C2C74;color:#fff;border:none;border-radius:10px;padding:9px 20px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;display:block;margin-left:auto;';
+
+  function close(){ document.body.removeChild(overlay); }
+  okBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function onKey(e){
+    if (e.key === 'Escape'){ document.removeEventListener('keydown', onKey); close(); }
+  });
+
+  card.appendChild(msg);
+  card.appendChild(okBtn);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  okBtn.focus();
+}
+
 window.showPrompt = showPrompt;
 window.showConfirm = showConfirm;
+window.showAlert = showAlert;
+// Remplace alert() lui-meme : tout code qui appelle encore alert(...) par erreur
+// (code futur, copie-colle) utilisera automatiquement la fenetre stylee.
+window.alert = showAlert;

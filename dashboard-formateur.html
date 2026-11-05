@@ -709,6 +709,11 @@ footer a:hover{color:var(--gold);}
                 <label>Pré-requis</label>
                 <textarea id="cPrereq" style="min-height:70px;" placeholder="Ex : aucun, ou notions de base en..."></textarea>
               </div>
+              <div class="form-group">
+                <label>Date de début du cours (facultatif)</label>
+                <input type="datetime-local" id="cStartDate">
+                <p class="small-muted" style="margin:6px 0 0;">Laissez vide si le cours est disponible dès sa publication. Avec une date future, le cours est publié en pré-inscription : les étudiants s'inscrivent (ou réservent leur place s'il est payant) et accèdent aux leçons à partir de cette date.</p>
+              </div>
               <div class="form-row">
                 <div class="form-group">
                   <label>Catégorie</label>
@@ -1021,6 +1026,25 @@ async function loadCoursesList(){
   const statusLabel = { brouillon:'Brouillon', en_attente:'En attente de validation', publie:'Publié', rejete:'Rejeté' };
   const statusClass = { brouillon:'pending', en_attente:'pending', publie:'ok', rejete:'blocked' };
 
+  /* Pre-inscriptions : inscrits (cours gratuits) et reservations (cours payants) */
+  const futureIds = data.filter(c => c.start_date && new Date(c.start_date).getTime() > Date.now()).map(c => c.id);
+  const enrollCount = {}, reservCount = {};
+  if (futureIds.length){
+    const [{ data: ens }, { data: res }] = await Promise.all([
+      supabase.from('enrollments').select('course_id').in('course_id', futureIds),
+      supabase.from('course_reservations').select('course_id').in('course_id', futureIds)
+    ]);
+    (ens || []).forEach(e => { enrollCount[e.course_id] = (enrollCount[e.course_id] || 0) + 1; });
+    (res || []).forEach(r => { reservCount[r.course_id] = (reservCount[r.course_id] || 0) + 1; });
+  }
+  const startLine = (c) => {
+    if (!futureIds.includes(c.id)) return '';
+    const d = new Date(c.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    const parts = [`${enrollCount[c.id] || 0} inscrit(s)`];
+    if (c.price > 0) parts.push(`${reservCount[c.id] || 0} réservation(s)`);
+    return `<div class="meta" style="color:var(--navy);font-weight:600;">Pré-inscription · commence le ${d} · ${parts.join(' · ')}</div>`;
+  };
+
   wrap.innerHTML = data.map(c => `
     <div class="course-row">
       <div>
@@ -1028,6 +1052,7 @@ async function loadCoursesList(){
         <div class="meta">${c.price > 0 ? c.price + ' HTG' : 'Gratuit'} · ${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}
           <span class="status-pill ${statusClass[c.status]}" style="margin-left:8px;">${statusLabel[c.status]}</span>
         </div>
+        ${startLine(c)}
         ${c.status === 'rejete' && c.rejection_reason ? `<div class="meta" style="color:#B23B3B;">Motif : ${escapeHtml(c.rejection_reason)}</div>` : ''}
       </div>
       <div class="actions">
@@ -1045,6 +1070,14 @@ document.getElementById('backToListBtn').addEventListener('click', () => {
   document.getElementById('coursesListView').classList.remove('hidden');
   loaded.courses = false; loadCoursesList();
 });
+
+/* Convertit une date ISO en valeur pour <input type="datetime-local"> (heure locale) */
+function toLocalInputValue(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 /* ---- Editeur de cours ---- */
 async function openCourseEditor(courseId){
@@ -1069,6 +1102,7 @@ async function openCourseEditor(courseId){
   document.getElementById('cShortDesc').value = c.short_description || '';
   document.getElementById('cDesc').value = c.description || '';
   document.getElementById('cPrereq').value = c.prerequisites || '';
+  document.getElementById('cStartDate').value = toLocalInputValue(c.start_date);
   document.getElementById('cCategory').value = c.category || '';
   document.getElementById('cPrice').value = c.price;
   document.getElementById('cLanguage').value = c.language || 'fr';
@@ -1109,6 +1143,7 @@ async function saveCourse(targetStatus){
     short_description: shortDesc,
     description: document.getElementById('cDesc').value.trim(),
     prerequisites: document.getElementById('cPrereq').value.trim(),
+    start_date: document.getElementById('cStartDate').value ? new Date(document.getElementById('cStartDate').value).toISOString() : null,
     category: document.getElementById('cCategory').value.trim(),
     price: Number(document.getElementById('cPrice').value) || 0,
     language: document.getElementById('cLanguage').value,
@@ -1287,7 +1322,7 @@ async function loadLessons(moduleId, box){
           body: JSON.stringify({ title: pendingVideo.name })
         });
         const initData = await initRes.json();
-        if (!initRes.ok) throw new Error(initData.error || 'Erreur d\'initialisation Bunny');
+        if (!initRes.ok) throw new Error((initData.error || 'Erreur d\'initialisation Bunny') + (initData.details ? ' — ' + initData.details : ''));
 
         await uploadVideoToBunny(pendingVideo, initData, (pct) => {
           progressBar.style.width = pct + '%';

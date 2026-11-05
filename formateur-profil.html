@@ -339,6 +339,7 @@ img{max-width:100%;display:block;}
 .course-tags{display:flex;gap:8px;flex-wrap:wrap;}
 .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.03em;}
 .badge-free{background:#E4F7EE;color:var(--success);}
+.badge-soon{background:var(--navy);color:#fff;}
 .badge-paid{background:#FDF0DA;color:#B57200;}
 .badge-diplome{background:var(--navy-soft);color:var(--navy);}
 .badge-certificat{background:#FBEAD2;color:#8A5A00;}
@@ -657,6 +658,11 @@ const supabase = createClient(
   'sb_publishable_V8gqxhUp1sNsLP0eT7oGsg_gKfkam_E'
 );
 
+function soonBadge(c){
+  if (!c.start_date || new Date(c.start_date).getTime() <= Date.now()) return '';
+  const d = new Date(c.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
+  return `<span class="badge badge-soon">Bientôt · ${d}</span>`;
+}
 async function updateNavForSession(session){
   const loginBtns = [document.getElementById('navLoginBtn'), document.getElementById('navLoginBtnMobile')].filter(Boolean);
   const registerBtns = [document.getElementById('navRegisterBtn'), document.getElementById('navRegisterBtnMobile')].filter(Boolean);
@@ -718,7 +724,7 @@ document.getElementById('shareTeacherBtn').dataset.shareId = teacherId;
     document.getElementById('tAvatar').textContent = initials(profile.full_name);
   }
 
-  const { data: courses } = await supabase.from('courses').select('id, slug, title, price, track, thumbnail_url, category').eq('teacher_id', teacherId).eq('status', 'publie').order('created_at', { ascending: false });
+  const { data: courses } = await supabase.from('courses').select('id, slug, title, price, track, thumbnail_url, category, start_date').eq('teacher_id', teacherId).eq('status', 'publie').order('created_at', { ascending: false });
   const coursesEl = document.getElementById('tCourses');
   if (!courses || courses.length === 0){
     coursesEl.innerHTML = '<p class="empty-state">Aucun cours publié pour le moment.</p>';
@@ -730,6 +736,7 @@ document.getElementById('shareTeacherBtn').dataset.shareId = teacherId;
         </div>
         <div class="course-body">
           <div class="course-tags">
+            ${soonBadge(c)}
             <span class="badge ${c.price > 0 ? 'badge-paid' : 'badge-free'}">${c.price > 0 ? 'Payant' : 'Gratuit'}</span>
             <span class="badge ${c.track === 'diplome' ? 'badge-diplome' : 'badge-certificat'}">${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}</span>
           </div>
@@ -835,6 +842,7 @@ document.getElementById('shareTeacherBtn').dataset.shareId = teacherId;
 </footer>
 
 
+<script src="modal.js"></script>
 <script src="i18n.js"></script>
 </body>
 </html>

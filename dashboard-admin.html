@@ -1034,6 +1034,19 @@ burger.addEventListener('click', () => navLinks.classList.toggle('open'));
 
 
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+/* Photo de profil (avatar_url) avec repli sur les initiales */
+function renderAvatar(el, profile){
+  if (!el) return;
+  const url = profile?.avatar_url || '';
+  el.textContent = initials(profile?.full_name);
+  if (!/^https?:\/\//i.test(url)) return;
+  const img = new Image();
+  img.alt = profile?.full_name || '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;';
+  img.onload = () => { el.textContent = ''; el.appendChild(img); el.style.overflow = 'hidden'; };
+  img.src = url;
+}
+
 function formatDate(iso){ return new Date(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1064,7 +1077,7 @@ let currentUser = null;
   }
   currentUser = profile;
   document.getElementById('userName').textContent = profile.full_name;
-  document.getElementById('userAvatar').textContent = initials(profile.full_name);
+  renderAvatar(document.getElementById('userAvatar'), profile);
   loadOverview();
 })();
 
@@ -1642,7 +1655,7 @@ async function loadCourses(){
   wrap.querySelectorAll('[data-action="approve-course"]').forEach(btn => btn.addEventListener('click', async () => {
     btn.disabled = true;
     const { error } = await supabase.from('courses').update({ status: 'publie', rejection_reason: null }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     sendEmail('course_approved', btn.dataset.email, { name: btn.dataset.name, courseTitle: btn.dataset.title });
     loaded.courses = false; loadCourses(); loadOverview();
   }));
@@ -1651,7 +1664,7 @@ async function loadCourses(){
     if (reason === null) return;
     btn.disabled = true;
     const { error } = await supabase.from('courses').update({ status: 'rejete', rejection_reason: reason }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     sendEmail('course_rejected', btn.dataset.email, { name: btn.dataset.name, courseTitle: btn.dataset.title, reason });
     loaded.courses = false; loadCourses(); loadOverview();
   }));
@@ -1691,7 +1704,7 @@ async function loadTeachers(){
     btn.disabled = true;
     const { error: e1 } = await supabase.from('teacher_applications').update({ status: 'approuve' }).eq('id', btn.dataset.id);
     const { error: e2 } = await supabase.from('profiles').update({ role: 'formateur' }).eq('id', btn.dataset.user);
-    if (e1 || e2){ alert('Erreur : ' + (e1?.message || e2?.message)); btn.disabled = false; return; }
+    if (e1 || e2){ showAlert('Erreur : ' + (e1?.message || e2?.message)); btn.disabled = false; return; }
     sendEmail('teacher_approved', btn.dataset.email, { name: btn.dataset.name });
     loaded.teachers = false; loadTeachers(); loadOverview();
   }));
@@ -1699,7 +1712,7 @@ async function loadTeachers(){
     if (!(await showConfirm('Rejeter cette candidature ?'))) return;
     btn.disabled = true;
     const { error } = await supabase.from('teacher_applications').update({ status: 'rejete' }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     sendEmail('teacher_rejected', btn.dataset.email, { name: btn.dataset.name });
     loaded.teachers = false; loadTeachers(); loadOverview();
   }));
@@ -1739,7 +1752,7 @@ async function loadCertificates(){
     const { error } = await supabase.from('certificates').update({
       certificate_url: url, status: 'livre', issued_at: new Date().toISOString()
     }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     sendEmail('certificate_delivered', btn.dataset.email, { name: btn.dataset.name, courseTitle: btn.dataset.title });
     loaded.certificates = false; loadCertificates(); loadOverview();
   }));
@@ -1772,7 +1785,7 @@ async function loadUsers(){
     const newRole = sel.value;
     if (!(await showConfirm(`Changer le rôle de cet utilisateur en "${newRole}" ?`))) { loaded.users = false; loadUsers(); return; }
     const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', sel.dataset.id);
-    if (error) alert('Erreur : ' + error.message);
+    if (error) showAlert('Erreur : ' + error.message);
   }));
 }
 
@@ -1809,14 +1822,14 @@ async function loadProducts(){
     const newStatus = btn.dataset.status === 'publie' ? 'brouillon' : 'publie';
     btn.disabled = true;
     const { error } = await supabase.from('digital_products').update({ status: newStatus }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     loaded.products = false; loadProducts();
   }));
   wrap.querySelectorAll('[data-action="delete-product"]').forEach(btn => btn.addEventListener('click', async () => {
     if (!(await showConfirm('Supprimer définitivement ce produit ?'))) return;
     btn.disabled = true;
     const { error } = await supabase.from('digital_products').delete().eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     loaded.products = false; loadProducts();
   }));
 }
@@ -1846,7 +1859,7 @@ async function loadMessages(){
   wrap.querySelectorAll('[data-action="mark-read"]').forEach(btn => btn.addEventListener('click', async () => {
     btn.disabled = true;
     const { error } = await supabase.from('contact_messages').update({ read: true }).eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     loaded.messages = false; loadMessages();
   }));
 }

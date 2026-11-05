@@ -54,6 +54,13 @@ const msg = document.getElementById('msg');
     .eq('id', session.user.id)
     .single();
 
+  /* Retour a la page d'origine enregistree par login.html (meme site uniquement) */
+  let back = null;
+  try { back = sessionStorage.getItem('jc_return_url'); sessionStorage.removeItem('jc_return_url'); } catch (_e){}
+  if (back && /^\/(?![\/\\])/.test(back)){
+    window.location.href = back;
+    return;
+  }
   const role = profile?.role || 'etudiant';
   window.location.href = `dashboard-${role}.html`;
 })();

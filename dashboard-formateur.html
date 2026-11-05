@@ -916,6 +916,19 @@ burger.addEventListener('click', () => navLinks.classList.toggle('open'));
 
 
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+/* Photo de profil (avatar_url) avec repli sur les initiales */
+function renderAvatar(el, profile){
+  if (!el) return;
+  const url = profile?.avatar_url || '';
+  el.textContent = initials(profile?.full_name);
+  if (!/^https?:\/\//i.test(url)) return;
+  const img = new Image();
+  img.alt = profile?.full_name || '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;';
+  img.onload = () => { el.textContent = ''; el.appendChild(img); el.style.overflow = 'hidden'; };
+  img.src = url;
+}
+
 
 /* ---- Televersement direct vers Bunny Stream, protocole TUS ecrit a la main
    (aucune bibliotheque externe : plus fiable qu'un import qui peut casser
@@ -973,7 +986,7 @@ let currentCourseId = null;
   }
   currentUser = profile;
   document.getElementById('userName').textContent = profile.full_name;
-  document.getElementById('userAvatar').textContent = initials(profile.full_name);
+  renderAvatar(document.getElementById('userAvatar'), profile);
   loadOverview();
 })();
 
@@ -1096,7 +1109,7 @@ async function openCourseEditor(courseId){
 
   document.getElementById('editorTitle').textContent = 'Modifier le cours';
   const { data: c, error } = await supabase.from('courses').select('*').eq('id', courseId).single();
-  if (error){ alert('Erreur : ' + error.message); return; }
+  if (error){ showAlert('Erreur : ' + error.message); return; }
 
   document.getElementById('cTitle').value = c.title;
   document.getElementById('cShortDesc').value = c.short_description || '';
@@ -1216,7 +1229,7 @@ async function loadModules(courseId){
   wrap.querySelectorAll('[data-action="delete-module"]').forEach(btn => btn.addEventListener('click', async () => {
     if (!(await showConfirm('Supprimer ce module et tout son contenu ?'))) return;
     const { error } = await supabase.from('course_modules').delete().eq('id', btn.dataset.id);
-    if (error){ alert('Erreur : ' + error.message); return; }
+    if (error){ showAlert('Erreur : ' + error.message); return; }
     loadModules(courseId);
   }));
 }
@@ -1226,7 +1239,7 @@ document.getElementById('addModuleBtn').addEventListener('click', async () => {
   if (!title) return;
   const { count } = await supabase.from('course_modules').select('id',{count:'exact',head:true}).eq('course_id', currentCourseId);
   const { error } = await supabase.from('course_modules').insert({ course_id: currentCourseId, title, position: (count||0) + 1 });
-  if (error){ alert('Erreur : ' + error.message); return; }
+  if (error){ showAlert('Erreur : ' + error.message); return; }
   loadModules(currentCourseId);
 });
 
@@ -1236,7 +1249,7 @@ async function loadLessons(moduleId, box){
 
   const list = (data||[]).map((l,i) => `
     <div class="lesson-row">
-      <span>${i+1}. ${escapeHtml(l.title)} ${l.video_url ? '🎬' : ''}</span>
+      <span>${i+1}. ${escapeHtml(l.title)} ${l.video_url ? '<span class="small-muted">(vidéo)</span>' : ''}</span>
       <button class="icon-btn danger" data-action="delete-lesson" data-id="${l.id}">&times;</button>
     </div>
   `).join('') || '<p class="small-muted">Aucune leçon.</p>';
@@ -1302,7 +1315,7 @@ async function loadLessons(moduleId, box){
     const title = document.getElementById(`newLessonTitle-${moduleId}`).value.trim();
     const content = document.getElementById(`newLessonContent-${moduleId}`).innerHTML.trim();
     const contentText = document.getElementById(`newLessonContent-${moduleId}`).innerText.trim();
-    if (!title || !contentText){ alert('Titre et texte théorique obligatoires.'); return; }
+    if (!title || !contentText){ showAlert('Titre et texte théorique obligatoires.'); return; }
 
     const addBtn = box.querySelector('[data-action="add-lesson"]');
     let videoId = null;
@@ -1331,7 +1344,7 @@ async function loadLessons(moduleId, box){
 
         videoId = initData.videoId;
       } catch (e){
-        alert('Erreur upload vidéo : ' + (e?.message || e));
+        showAlert('Erreur upload vidéo : ' + (e?.message || e));
         addBtn.disabled = false;
         return;
       }
@@ -1342,7 +1355,7 @@ async function loadLessons(moduleId, box){
       module_id: moduleId, title, content, video_url: videoId, position: (count||0) + 1
     });
     addBtn.disabled = false;
-    if (error){ alert('Erreur : ' + error.message); return; }
+    if (error){ showAlert('Erreur : ' + error.message); return; }
     loadLessons(moduleId, box);
   });
 }
@@ -1355,7 +1368,7 @@ async function loadQuiz(moduleId, box){
     box.innerHTML = `<button class="btn btn-outline btn-sm" data-action="create-quiz">+ Créer le quiz de ce module</button>`;
     box.querySelector('[data-action="create-quiz"]').addEventListener('click', async () => {
       const { error } = await supabase.from('quizzes').insert({ module_id: moduleId, title: 'Quiz du module' });
-      if (error){ alert('Erreur : ' + error.message); return; }
+      if (error){ showAlert('Erreur : ' + error.message); return; }
       loadQuiz(moduleId, box);
     });
     return;
@@ -1401,12 +1414,12 @@ async function loadQuiz(moduleId, box){
     const question = document.getElementById(`newQ-${qid}`).value.trim();
     const options = [0,1,2,3].map(i => document.getElementById(`newOpt${i}-${qid}`).value.trim());
     const correct = Number(document.getElementById(`newCorrect-${qid}`).value);
-    if (!question || options.some(o => !o)){ alert('Remplissez la question et les 4 options.'); return; }
+    if (!question || options.some(o => !o)){ showAlert('Remplissez la question et les 4 options.'); return; }
     const { count } = await supabase.from('quiz_questions').select('id',{count:'exact',head:true}).eq('quiz_id', qid);
     const { error } = await supabase.from('quiz_questions').insert({
       quiz_id: qid, question, options, correct_index: correct, position: (count||0) + 1
     });
-    if (error){ alert('Erreur : ' + error.message); return; }
+    if (error){ showAlert('Erreur : ' + error.message); return; }
     loadQuiz(moduleId, box);
   });
 }
@@ -1456,7 +1469,7 @@ async function reviewSubmission(id, status){
   const { error } = await supabase.from('project_submissions').update({
     status, feedback, reviewed_by: currentUser.id, reviewed_at: new Date().toISOString()
   }).eq('id', id);
-  if (error){ alert('Erreur : ' + error.message); return; }
+  if (error){ showAlert('Erreur : ' + error.message); return; }
   loaded.submissions = false; loadSubmissions(); loadOverview();
 }
 
@@ -1496,7 +1509,7 @@ function openProductEditor(product){
 
 document.getElementById('saveProductBtn').addEventListener('click', async () => {
   const title = document.getElementById('pTitle').value.trim();
-  if (!title){ alert('Le titre est obligatoire.'); return; }
+  if (!title){ showAlert('Le titre est obligatoire.'); return; }
 
   const payload = {
     title,
@@ -1510,13 +1523,13 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
   if (pendingProductThumb){
     const path = `${currentUser.id}/${Date.now()}-${pendingProductThumb.name}`;
     const { error: upErr } = await supabase.storage.from('products').upload(path, pendingProductThumb, { upsert: true });
-    if (upErr){ alert('Erreur upload image : ' + upErr.message); return; }
+    if (upErr){ showAlert('Erreur upload image : ' + upErr.message); return; }
     payload.cover_url = supabase.storage.from('products').getPublicUrl(path).data.publicUrl;
   }
   if (pendingProductFile){
     const path = `${currentUser.id}/${Date.now()}-${pendingProductFile.name}`;
     const { error: upErr } = await supabase.storage.from('product-files').upload(path, pendingProductFile, { upsert: true });
-    if (upErr){ alert('Erreur upload fichier : ' + upErr.message); return; }
+    if (upErr){ showAlert('Erreur upload fichier : ' + upErr.message); return; }
     payload.file_urls = [{ name: pendingProductFile.name, path }];
   }
 
@@ -1528,7 +1541,7 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
     if (!payload.file_urls) payload.file_urls = [];
     result = await supabase.from('digital_products').insert(payload).select().single();
   }
-  if (result.error){ alert('Erreur : ' + result.error.message); return; }
+  if (result.error){ showAlert('Erreur : ' + result.error.message); return; }
 
   document.getElementById('productEditor').classList.add('hidden');
   loaded.products = false; loadProducts(); loadOverview();

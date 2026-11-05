@@ -895,7 +895,7 @@ function renderCommentForm(){
   const box = document.getElementById('commentFormBox');
   if (!box) return;
   if (!commentSession){
-    box.innerHTML = `<div class="comment-login">Vous devez être connecté pour commenter. <a href="login.html" style="color:var(--navy);font-weight:600;">Se connecter</a> ou <a href="register.html" style="color:var(--navy);font-weight:600;">créer un compte</a>.</div>`;
+    box.innerHTML = `<div class="comment-login">Vous devez être connecté pour commenter. <a href="login.html?next=${encodeURIComponent(window.location.pathname + window.location.search)}" style="color:var(--navy);font-weight:600;">Se connecter</a> ou <a href="register.html" style="color:var(--navy);font-weight:600;">créer un compte</a>.</div>`;
     return;
   }
   box.innerHTML = `

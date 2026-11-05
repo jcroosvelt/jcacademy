@@ -548,6 +548,10 @@ footer a:hover{color:var(--gold);}
 .dash-nav .logout:hover{background:#FBEAEA;color:#B23B3B;}
 .dash-main{padding:32px;background:#fff;min-width:0;overflow-x:hidden;}
 @media (max-width:860px){.dash-main{padding:22px;}}
+.hub-welcome{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px;}
+.hub-welcome h1{margin:0;}
+.hub-avatar{width:64px;height:64px;border-radius:50%;flex:0 0 auto;background:var(--gold);color:var(--navy-dark);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:22px;border:3px solid rgba(255,255,255,.85);box-shadow:0 8px 20px rgba(0,0,0,.18);overflow:hidden;}
+@media (max-width:600px){.hub-avatar{width:52px;height:52px;font-size:18px;}}
 .dash-welcome{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-dark) 100%);border-radius:16px;padding:26px 28px;color:#fff;margin-bottom:28px;position:relative;overflow:hidden;}
 .dash-welcome::after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;background:var(--gold);opacity:.18;clip-path:polygon(50% 0,100% 100%,0 100%);}
 .dash-welcome h2{color:#fff;margin:0 0 6px;font-size:22px;}
@@ -649,7 +653,10 @@ footer a:hover{color:var(--gold);}
 
 <div class="page-header">
   <div class="container">
-    <h1 id="welcomeTitle">Bonjour 👋</h1>
+    <div class="hub-welcome">
+      <div class="hub-avatar" id="userAvatar">--</div>
+      <h1 id="welcomeTitle">Bonjour</h1>
+    </div>
     <p>Bienvenue sur votre espace étudiant JC Academy — retrouvez ici vos cours, vos achats et vos certificats.</p>
     <div class="hero-ctas" style="margin-top:22px;flex-wrap:wrap;">
       <a href="#mes-cours" class="btn btn-gold">Mes cours</a>
@@ -781,6 +788,19 @@ burger.addEventListener('click', () => navLinks.classList.toggle('open'));
 
 
 function initials(name){ return (name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+/* Photo de profil (avatar_url) avec repli sur les initiales */
+function renderAvatar(el, profile){
+  if (!el) return;
+  const url = profile?.avatar_url || '';
+  el.textContent = initials(profile?.full_name);
+  if (!/^https?:\/\//i.test(url)) return;
+  const img = new Image();
+  img.alt = profile?.full_name || '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;';
+  img.onload = () => { el.textContent = ''; el.appendChild(img); el.style.overflow = 'hidden'; };
+  img.src = url;
+}
+
 function formatDate(iso){ return new Date(iso).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'}); }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -795,7 +815,8 @@ let currentUser = null;
     return;
   }
   currentUser = profile;
-  document.getElementById('welcomeTitle').textContent = `Bonjour ${(profile.full_name || '').split(' ')[0] || ''} 👋`;
+  document.getElementById('welcomeTitle').textContent = `Bonjour ${(profile.full_name || '').split(' ')[0] || ''}`.trim();
+  renderAvatar(document.getElementById('userAvatar'), profile);
   loadOverview();
   loadMyCourses();
   loadCertificates();
@@ -1228,7 +1249,7 @@ function selectProject(){
     if (pendingFile){
       const path = `${currentUser.id}/${Date.now()}-${pendingFile.name}`;
       const { error: upErr } = await supabase.storage.from('project-submissions').upload(path, pendingFile);
-      if (upErr){ alert('Erreur upload : ' + upErr.message); return; }
+      if (upErr){ showAlert('Erreur upload : ' + upErr.message); return; }
       fileUrls = [{ name: pendingFile.name, path }];
     }
     const { error } = await supabase.from('project_submissions').insert({
@@ -1236,7 +1257,7 @@ function selectProject(){
       comment: document.getElementById('subComment').value.trim(),
       file_urls: fileUrls
     });
-    if (error){ alert('Erreur : ' + error.message); return; }
+    if (error){ showAlert('Erreur : ' + error.message); return; }
     const { data: sub } = await supabase.from('project_submissions').select('*').eq('course_id', player.course.id).eq('user_id', currentUser.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
     player.submission = sub;
     selectProject();
@@ -1327,20 +1348,20 @@ async function loadCertificates(){
     const courseId = btn.dataset.course;
     const starsWrap = document.querySelector(`[data-stars="${courseId}"]`);
     const rating = Number(starsWrap.dataset.selected || 0);
-    if (!rating){ alert('Choisissez une note (1 à 5 étoiles).'); return; }
+    if (!rating){ showAlert('Choisissez une note (1 à 5 étoiles).'); return; }
     btn.disabled = true;
     const { error } = await supabase.from('reviews').insert({
       course_id: courseId, user_id: currentUser.id, rating,
       comment: document.getElementById('review-comment-' + courseId).value.trim()
     });
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     loadCertificates();
   }));
 
   wrap.querySelectorAll('[data-action="request-cert"]').forEach(btn => btn.addEventListener('click', async () => {
     btn.disabled = true;
     const { error } = await supabase.from('certificates').insert({ user_id: currentUser.id, course_id: btn.dataset.course });
-    if (error){ alert('Erreur : ' + error.message); btn.disabled = false; return; }
+    if (error){ showAlert('Erreur : ' + error.message); btn.disabled = false; return; }
     loadCertificates();
   }));
 }
@@ -1403,7 +1424,7 @@ async function loadPurchases(){
     const data = await res.json();
     btn.disabled = false;
     btn.textContent = 'Télécharger';
-    if (!res.ok || !data.files?.length){ alert("Aucun fichier disponible pour le moment."); return; }
+    if (!res.ok || !data.files?.length){ showAlert("Aucun fichier disponible pour le moment."); return; }
     data.files.forEach(f => window.open(f.url, '_blank'));
   }));
 }

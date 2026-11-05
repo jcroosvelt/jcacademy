@@ -912,7 +912,7 @@ function renderStartInfo(course){
 
 async function setupPreEnrollment(course, session){
   const area = document.getElementById('dEnrollArea');
-  const loginUrl = 'login.html';
+  const loginUrl = 'login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
 
   /* Cours gratuit : la pre-inscription est une inscription normale, leçons verrouillees jusqu'a la date */
   if (!(course.price > 0)){
@@ -1097,14 +1097,14 @@ function setupEnrollButton(course){
     btn.textContent = "S'inscrire gratuitement";
     btn.addEventListener('click', async () => {
       if (!currentSession){
-        window.location.href = 'login.html';
+        window.location.href = 'login.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
         return;
       }
       btn.disabled = true;
       btn.textContent = 'Inscription...';
       const { error } = await supabase.from('enrollments').insert({ user_id: currentSession.user.id, course_id: course.id, progress: 0 });
       if (error){
-        alert('Erreur : ' + error.message);
+        showAlert('Erreur : ' + error.message);
         btn.disabled = false;
         return;
       }

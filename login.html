@@ -768,7 +768,26 @@ burger.addEventListener('click', () => navLinks.classList.toggle('open'));
   if (session) await redirectToDashboard(session.user.id);
 })();
 
+/* Page d'origine : parametre ?next=... ou page precedente du site.
+   Seules les adresses du meme site sont acceptees (pas de redirection externe). */
+const AUTH_PAGES = ['login.html','register.html','mot-de-passe-oublie.html','reinitialiser-mot-de-passe.html',
+  'verifiez-votre-email.html','confirmer-inscription.html','auth-callback.html','completer-profil.html'];
+function safeReturnUrl(raw){
+  if (!raw) return null;
+  try {
+    const u = new URL(raw, window.location.origin);
+    if (u.origin !== window.location.origin) return null;
+    const page = (u.pathname.split('/').pop() || '').toLowerCase();
+    if (AUTH_PAGES.includes(page)) return null;
+    return u.pathname + u.search + u.hash;
+  } catch (_e){ return null; }
+}
+const returnUrl = safeReturnUrl(new URLSearchParams(window.location.search).get('next')) || safeReturnUrl(document.referrer);
+/* Garde la page d'origine pour la connexion Google (retour via auth-callback.html) */
+try { if (returnUrl) sessionStorage.setItem('jc_return_url', returnUrl); else sessionStorage.removeItem('jc_return_url'); } catch (_e){}
+
 async function redirectToDashboard(userId){
+  if (returnUrl){ window.location.href = returnUrl; return; }
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single();
   const role = profile?.role || 'etudiant';
   window.location.href = `dashboard-${role}.html`;
@@ -830,7 +849,7 @@ async function oauthSignIn(provider){
     options: { redirectTo: window.location.origin + window.location.pathname.replace(/[^/]+$/, '') + 'auth-callback.html' }
   });
   if (error){
-    alert("Connexion " + provider + " indisponible pour le moment : " + error.message);
+    showAlert("Connexion " + provider + " indisponible pour le moment : " + error.message);
   }
 }
 document.getElementById('googleAuthBtn').addEventListener('click', () => oauthSignIn('google'));

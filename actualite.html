@@ -625,10 +625,59 @@ footer a:hover{color:var(--gold);}
 </div>
 
 <style>
-.article-cover{width:100%;height:320px;border-radius:16px;background:var(--navy-soft);margin-bottom:24px;background-size:cover;background-position:center;}
-.article-full h1{font-size:32px;margin-bottom:8px;}
-.article-full .meta{color:var(--text-muted);font-size:13.5px;margin-bottom:24px;}
-.article-full .body-text{font-size:16px;line-height:1.8;white-space:pre-wrap;}
+.article-full{padding-bottom:24px;}
+.article-cover{display:block;width:100%;aspect-ratio:16/9;max-height:420px;object-fit:cover;border-radius:16px;background:var(--navy-soft);margin-bottom:28px;}
+.article-full h1{font-size:34px;line-height:1.2;margin:0 0 14px;}
+.article-lead{font-size:19px;line-height:1.6;color:var(--navy);font-weight:500;border-left:4px solid var(--gold);padding:4px 0 4px 16px;margin:0 0 20px;}
+.article-byline{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.article-byline .avatar{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:15px;flex-shrink:0;}
+.article-byline .avatar{margin:0;flex:0 0 auto;}
+.article-byline .who{font-weight:600;font-size:14.5px;color:var(--text);}
+.article-byline .when{font-size:13px;color:var(--text-muted);}
+.share-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:28px;}
+.share-bar .share-label{font-size:13px;font-weight:600;color:var(--text-muted);margin-right:4px;}
+.share-btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:999px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit;}
+.share-btn svg{width:16px;height:16px;fill:currentColor;flex-shrink:0;}
+.share-btn:hover{border-color:var(--navy);color:var(--navy);}
+.share-btn.fb:hover{border-color:#1877F2;color:#1877F2;}
+.share-btn.wa:hover{border-color:#1D9A6C;color:#1D9A6C;}
+.share-btn.x:hover{border-color:#111;color:#111;}
+.share-btn.copied{border-color:#1D9A6C;color:#1D9A6C;}
+.news-tag{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);background:var(--navy-soft);padding:5px 11px;border-radius:999px;margin-bottom:12px;}
+.article-body-content p{margin:0 0 18px;}
+.article-body-content h2{font-size:24px;margin:32px 0 12px;}
+.article-body-content h3{font-size:19px;margin:26px 0 10px;}
+.article-body-content blockquote{margin:22px 0;padding:6px 0 6px 18px;border-left:4px solid var(--gold);color:var(--text-muted);font-style:italic;}
+.article-body-content ul,.article-body-content ol{margin:0 0 18px;padding-left:24px;}
+.article-body-content li{margin-bottom:6px;}
+.article-body-content img{display:block;height:auto;}
+.article-actions{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;}
+.comments{margin-top:48px;padding-top:28px;border-top:1px solid var(--border);}
+.comments h2{font-size:22px;margin:0 0 6px;}
+.comments .comments-note{font-size:13px;color:var(--text-muted);margin:0 0 20px;}
+.comment-item{display:flex;gap:12px;padding:16px 0;border-bottom:1px solid var(--border);}
+.comment-item:last-child{border-bottom:none;}
+.comment-item .avatar{width:36px;height:36px;border-radius:50%;background:var(--navy-soft);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.comment-main{flex:1;min-width:0;}
+.comment-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;}
+.comment-head strong{font-size:14px;}
+.comment-head span{font-size:12px;color:var(--text-muted);}
+.comment-text{margin:6px 0 0;font-size:14.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;}
+.comment-delete{background:none;border:none;color:#C0392B;font-size:12px;font-weight:600;cursor:pointer;padding:0;margin-top:6px;font-family:inherit;}
+.comment-form{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px;}
+.comment-form textarea{width:100%;min-height:100px;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14.5px;resize:vertical;box-sizing:border-box;background:#fff;}
+.comment-form textarea:focus{outline:none;border-color:var(--navy);}
+.comment-form-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+.comment-form-foot .counter{font-size:12px;color:var(--text-muted);}
+.comment-msg{font-size:13px;margin:8px 0 0;}
+.comment-login{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;font-size:14.5px;margin-bottom:12px;}
+@media (max-width:600px){
+  .article-full h1{font-size:26px;}
+  .article-lead{font-size:17px;}
+  .article-cover{border-radius:12px;margin-bottom:20px;}
+  .share-btn .lbl{display:none;}
+  .share-btn{padding:0 12px;}
+}
 </style>
 
 
@@ -732,6 +781,10 @@ function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<
 function formatDate(iso){ return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }); }
 document.getElementById('navBurger').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
 
+const params = new URLSearchParams(window.location.search);
+const slug = params.get('slug');
+const wrap = document.getElementById('articleContent');
+
 /* Adresse http(s) uniquement (couverture, liens) */
 function safeUrl(url, allowMailto){
   const u = (url || '').trim();
@@ -745,15 +798,152 @@ function renderArticleBody(body){
   /* rich.js : assainissement commun (liste blanche) et conversion des anciens textes bruts */
   return window.JCRich.render(body);
 }
-const params = new URLSearchParams(window.location.search);
-const slug = params.get('slug');
-const wrap = document.getElementById('articleContent');
+function initials(name){
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return 'JC';
+  return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length-1][0] : '')).toUpperCase();
+}
+function formatDateTime(iso){
+  return new Date(iso).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) + ' à ' +
+         new Date(iso).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+}
+
+const ICONS = {
+  fb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-7.5h2.5l.4-3h-2.9V8.6c0-.9.3-1.5 1.5-1.5h1.6V4.4c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.3H8v3h2.5V21h3z"/></svg>',
+  wa: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a9.9 9.9 0 0 0-8.5 15l-1.4 5 5.2-1.4A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.5-.5-1-1.1-1.3-1.7-.1-.2 0-.4.1-.5l.4-.5.2-.4v-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.6.6-.9 1.4-.9 2.2.1 1 .5 2 1.1 2.8 1.2 1.7 2.7 3 4.6 3.8.5.2 1 .4 1.5.5.6.2 1.2.1 1.7-.1.6-.3 1.1-.8 1.2-1.4.1-.3.1-.6 0-.9l-.4-.3z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7 8 10.3h-6.2l-4.9-6.3L5.4 21H2.3l7.2-8.3L1.8 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z"/></svg>',
+  link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a3 3 0 1 1 4.2 4.2l-2 2a1 1 0 1 1-1.4-1.4l2-2a1 1 0 0 0-1.4-1.4L12 13.4a1 1 0 0 1-1.4 0zM13.4 10.6a1 1 0 0 1 0 1.4l-3.5 3.5a3 3 0 1 1-4.2-4.2l2-2a1 1 0 1 1 1.4 1.4l-2 2a1 1 0 0 0 1.4 1.4L12 10.6a1 1 0 0 1 1.4 0z"/></svg>'
+};
+function shareBarHtml(shareUrl, title){
+  const u = encodeURIComponent(shareUrl);
+  const t = encodeURIComponent(title);
+  return `
+    <div class="share-bar">
+      <span class="share-label">Partager</span>
+      <a class="share-btn fb" href="https://www.facebook.com/sharer/sharer.php?u=${u}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur Facebook">${ICONS.fb}<span class="lbl">Facebook</span></a>
+      <a class="share-btn wa" href="https://wa.me/?text=${encodeURIComponent(title + ' ' + shareUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur WhatsApp">${ICONS.wa}<span class="lbl">WhatsApp</span></a>
+      <a class="share-btn x" href="https://twitter.com/intent/tweet?url=${u}&text=${t}" target="_blank" rel="noopener noreferrer" aria-label="Partager sur X">${ICONS.x}<span class="lbl">X</span></a>
+      <button class="share-btn copy-link-btn" type="button" aria-label="Copier le lien">${ICONS.link}<span class="lbl">Copier le lien</span></button>
+    </div>`;
+}
+async function copyShareLink(btn, shareUrl){
+  const label = btn.querySelector('.lbl');
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    btn.classList.add('copied');
+    if (label) label.textContent = 'Lien copié';
+    setTimeout(() => { btn.classList.remove('copied'); if (label) label.textContent = 'Copier le lien'; }, 2200);
+  } catch (_e) {
+    await showPrompt('Copiez ce lien :', shareUrl);
+  }
+}
+
+/* ===== Commentaires ===== */
+let article = null;
+let commentSession = null;
+let commentIsAdmin = false;
+let commentAuthorName = '';
+
+async function loadCommentUser(session){
+  commentSession = session;
+  commentIsAdmin = false;
+  commentAuthorName = '';
+  if (!session) return;
+  const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', session.user.id).maybeSingle();
+  commentIsAdmin = profile?.role === 'admin';
+  /* Meme regle que la base : nom du profil, sinon « Utilisateur » */
+  commentAuthorName = (profile?.full_name || '').trim() || 'Utilisateur';
+}
+
+function renderCommentForm(){
+  const box = document.getElementById('commentFormBox');
+  if (!box) return;
+  if (!commentSession){
+    box.innerHTML = `<div class="comment-login">Vous devez être connecté pour commenter. <a href="login.html?next=${encodeURIComponent(window.location.pathname + window.location.search)}" style="color:var(--navy);font-weight:600;">Se connecter</a> ou <a href="register.html" style="color:var(--navy);font-weight:600;">créer un compte</a>.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="comment-form">
+      <p style="margin:0 0 10px;font-size:13.5px;color:var(--text-muted);">Vous commentez en tant que <strong style="color:var(--text);">${escapeHtml(commentAuthorName)}</strong></p>
+      <textarea id="commentInput" maxlength="1000" placeholder="Votre commentaire..."></textarea>
+      <div class="comment-form-foot">
+        <span class="counter" id="commentCounter">0 / 1000</span>
+        <button class="btn btn-primary btn-sm" id="commentSubmitBtn" type="button">Publier le commentaire</button>
+      </div>
+      <p class="comment-msg" id="commentMsg" style="display:none;"></p>
+    </div>`;
+  const input = document.getElementById('commentInput');
+  input.addEventListener('input', () => { document.getElementById('commentCounter').textContent = input.value.length + ' / 1000'; });
+  document.getElementById('commentSubmitBtn').addEventListener('click', submitComment);
+}
+
+function showCommentMsg(text, isError){
+  const el = document.getElementById('commentMsg');
+  if (!el) return;
+  el.textContent = text; el.style.color = isError ? '#C0392B' : '#1D9A6C'; el.style.display = 'block';
+}
+
+async function submitComment(){
+  const input = document.getElementById('commentInput');
+  const btn = document.getElementById('commentSubmitBtn');
+  const text = input.value.trim();
+  if (text.length < 2){ showCommentMsg('Votre commentaire est vide.', true); return; }
+  if (!commentSession){ renderCommentForm(); return; }
+  btn.disabled = true;
+  const { error } = await supabase.from('article_comments').insert({
+    content_id: article.id,
+    user_id: commentSession.user.id,
+    author_name: commentAuthorName,
+    comment: text.slice(0, 1000)
+  });
+  btn.disabled = false;
+  if (error){ showCommentMsg('Erreur : ' + error.message, true); return; }
+  input.value = '';
+  document.getElementById('commentCounter').textContent = '0 / 1000';
+  showCommentMsg('Commentaire publié.', false);
+  loadComments();
+}
+
+async function loadComments(){
+  const list = document.getElementById('commentsList');
+  const note = document.getElementById('commentsNote');
+  if (!list) return;
+  const { data, error, count } = await supabase.from('article_comments')
+    .select('id, user_id, author_name, comment, created_at', { count: 'exact' })
+    .eq('content_id', article.id)
+    .order('created_at', { ascending: false })
+    .limit(5);
+  if (error){ list.innerHTML = '<p class="small-muted">Impossible de charger les commentaires.</p>'; return; }
+  const total = count ?? (data || []).length;
+  note.textContent = total === 0 ? 'Soyez le premier à réagir.'
+    : total > 5 ? `${total} commentaires — les 5 plus récents sont affichés.`
+    : total === 1 ? '1 commentaire' : `${total} commentaires`;
+  if (!data || !data.length){ list.innerHTML = ''; return; }
+  list.innerHTML = data.map(c => {
+    const canDelete = commentSession && (commentIsAdmin || commentSession.user.id === c.user_id);
+    return `
+      <div class="comment-item">
+        <div class="avatar">${escapeHtml(initials(c.author_name))}</div>
+        <div class="comment-main">
+          <div class="comment-head"><strong>${escapeHtml(c.author_name || 'Utilisateur')}</strong><span>${formatDateTime(c.created_at)}</span></div>
+          <p class="comment-text">${escapeHtml(c.comment)}</p>
+          ${canDelete ? `<button class="comment-delete" type="button" data-comment-id="${escapeHtml(c.id)}">Supprimer</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+  list.querySelectorAll('[data-comment-id]').forEach(b => b.addEventListener('click', async () => {
+    if (!(await showConfirm('Supprimer ce commentaire ?'))) return;
+    const { error: delErr } = await supabase.from('article_comments').delete().eq('id', b.dataset.commentId);
+    if (delErr){ await showAlert('Erreur : ' + delErr.message); return; }
+    loadComments();
+  }));
+}
 
 (async () => {
   if (!slug){ wrap.innerHTML = '<p>Actualité introuvable.</p>'; return; }
   const { data, error } = await supabase.from('site_content').select('*').eq('slug', slug).eq('type', 'actualite').eq('published', true).single();
   if (error || !data){ wrap.innerHTML = '<p>Cette actualité est introuvable ou n\'est plus disponible.</p><a href="actualites.html" class="btn btn-outline">Retour aux actualités</a>'; return; }
-
+  article = data;
   document.title = data.title + ' — JC Academy';
   const metaDesc = document.querySelector('meta[name="description"]') || (() => { const m = document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; })();
   metaDesc.setAttribute('content', (data.excerpt || '').slice(0, 160));
@@ -763,23 +953,66 @@ const wrap = document.getElementById('articleContent');
     document.querySelector('meta[property="og:image"]')?.setAttribute('content', data.cover_url);
     document.querySelector('meta[name="twitter:image"]')?.setAttribute('content', data.cover_url);
   }
+  const ld = document.createElement('script');
+  ld.type = 'application/ld+json';
+  ld.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": data.title,
+    "description": data.excerpt || undefined,
+    "datePublished": data.created_at,
+    "dateModified": data.updated_at || data.created_at,
+    "image": data.cover_url || undefined,
+    "author": data.author_name ? { "@type": "Person", "name": data.author_name } : undefined,
+    "publisher": { "@type": "Organization", "name": "JC Academy" }
+  });
+  document.head.appendChild(ld);
 
+  /* Lien propre /n/slug : c'est lui que lisent Facebook et WhatsApp pour l'apercu */
+  const shareUrl = `${window.location.origin}/n/${encodeURIComponent(slug)}`;
+  const coverUrl = safeUrl(data.cover_url, false);
+  const author = data.author_name || 'JC Academy';
 
   wrap.innerHTML = `
-    <div class="article-full">
-      ${data.cover_url ? `<div class="article-cover" style="background-image:url(${data.cover_url});"></div>` : ''}
+    <article class="article-full">
+      ${coverUrl ? `<img class="article-cover" src="${escapeHtml(coverUrl)}" alt="${escapeHtml(data.title)}">` : ''}
+      <span class="news-tag">Actualité</span>
       <h1>${escapeHtml(data.title)}</h1>
-      <div class="meta">${data.author_name ? "Par " + escapeHtml(data.author_name) + " · " : ""}${formatDate(data.created_at)}</div>
-      <div class="article-body-content rich-content">${renderArticleBody(data.body || data.excerpt || '')}</div>
-      <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="actualites.html" class="btn btn-outline">&#8592; Retour aux actualités</a>
-        <button class="btn btn-primary" id="shareNewsBtn" data-share-type="actualite">Partager cette actualité</button>
+      ${data.excerpt ? `<p class="article-lead">${escapeHtml(data.excerpt)}</p>` : ''}
+      <div class="article-byline">
+        <div class="avatar">${escapeHtml(initials(author))}</div>
+        <div>
+          <div class="who">Par ${escapeHtml(author)}</div>
+          <div class="when">Publié le ${formatDate(data.created_at)}</div>
+        </div>
       </div>
-    </div>
+      ${shareBarHtml(shareUrl, data.title)}
+      <div class="article-body-content rich-content">${renderArticleBody(data.body)}</div>
+      <div style="margin-top:36px;">${shareBarHtml(shareUrl, data.title)}</div>
+      <div class="article-actions">
+        <a href="actualites.html" class="btn btn-outline">&#8592; Retour aux actualités</a>
+      </div>
+      <section class="comments" id="comments">
+        <h2>Commentaires</h2>
+        <p class="comments-note" id="commentsNote">Chargement...</p>
+        <div id="commentFormBox"></div>
+        <div id="commentsList"></div>
+      </section>
+    </article>
   `;
+  wrap.querySelectorAll('.copy-link-btn').forEach(b => b.addEventListener('click', () => copyShareLink(b, shareUrl)));
 
-  document.getElementById('shareNewsBtn').dataset.shareId = slug;
-  document.getElementById('shareNewsBtn').dataset.shareTitle = data.title;
+  const { data: { session } } = await supabase.auth.getSession();
+  await loadCommentUser(session);
+  renderCommentForm();
+  loadComments();
+
+  supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    if ((newSession?.user?.id || null) === (commentSession?.user?.id || null)) return;
+    await loadCommentUser(newSession);
+    renderCommentForm();
+    loadComments();
+  });
 })();
 </script>
 <script src="share.js"></script>

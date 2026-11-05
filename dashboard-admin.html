@@ -871,6 +871,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
     <div class="adm-nav-label">Menu</div>
     <a href="#" data-tab="overview" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg><span>Tableau de bord</span></a>
     <a href="#" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>Statistiques &amp; revenus</span></a>
+    <a href="#" data-tab="payouts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Versements</span></a>
     <div class="adm-nav-label">Gestion</div>
     <a href="#" data-tab="courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/></svg><span>Cours à valider</span><span class="adm-badge" id="badgeCourses"></span></a>
     <a href="#" data-tab="teachers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Candidatures formateurs</span><span class="adm-badge" id="badgeTeachers"></span></a>
@@ -1056,6 +1057,52 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           </table>
         </div>
         <p class="small-muted" style="margin-top:16px;">Seules les commandes au statut « payé » sont comptées. Commission JC Academy : 30 % sur les cours, 20 % sur les produits numériques. Ce qui est vendu par un compte admin revient entièrement à JC Academy.</p>
+      </section>
+
+      <section id="tab-payouts" class="tab-panel hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <h3 style="margin:0;">Versements aux formateurs</h3>
+          <button class="btn btn-primary btn-sm" id="newPayoutBtn" type="button">+ Enregistrer un versement</button>
+        </div>
+        <p class="small-muted" style="margin:0 0 18px;">Part due : 70 % des cours et 80 % des produits numériques vendus (commandes payées). Les ventes des comptes admin ne sont pas concernées.</p>
+        <div class="dash-stats" id="payoutCards">
+          <div class="dash-stat-card"><b>—</b><span>Total dû aux formateurs</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Déjà versé</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Reste à verser</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Versements enregistrés</span></div>
+        </div>
+
+        <div id="payoutForm" class="editor-card hidden">
+          <h4 style="margin-top:0;">Nouveau versement</h4>
+          <div class="form-group"><label>Bénéficiaire</label><select id="poTeacher"></select></div>
+          <div class="form-group"><label>Montant (HTG)</label><input type="number" id="poAmount" min="1" step="0.01"></div>
+          <div class="form-group"><label>Moyen de paiement</label>
+            <select id="poMethod"><option value="moncash">MonCash</option><option value="natcash">NatCash</option><option value="virement">Virement bancaire</option><option value="especes">Espèces</option><option value="autre">Autre</option></select>
+          </div>
+          <div class="form-group"><label>Date du versement</label><input type="date" id="poDate"></div>
+          <div class="form-group"><label>Référence (facultatif)</label><input type="text" id="poRef" maxlength="200" placeholder="Ex : numéro de transaction MonCash"></div>
+          <div class="form-group"><label>Note (facultatif)</label><textarea id="poNote" maxlength="1000" style="min-height:60px;"></textarea></div>
+          <p id="payoutMsg" style="display:none;font-size:13.5px;"></p>
+          <div class="review-actions">
+            <button class="btn-mini" id="poCancelBtn" type="button">Annuler</button>
+            <button class="btn btn-primary" id="poSaveBtn" type="button">Enregistrer le versement</button>
+          </div>
+        </div>
+
+        <h4 style="margin:8px 0 10px;">Solde par formateur</h4>
+        <div class="table-wrap" style="margin-bottom:28px;">
+          <table class="data-table">
+            <thead><tr><th>Formateur</th><th>Part due</th><th>Déjà versé</th><th>Reste à verser</th><th></th></tr></thead>
+            <tbody id="payoutBalanceBody"><tr><td colspan="5">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+        <h4 style="margin:8px 0 10px;">Historique des versements</h4>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Bénéficiaire</th><th>Date</th><th>Montant</th><th>Moyen</th><th>Référence</th><th></th></tr></thead>
+            <tbody id="payoutHistoryBody"><tr><td colspan="6">Chargement...</td></tr></tbody>
+          </table>
+        </div>
       </section>
 
       <section id="tab-forms" class="tab-panel hidden">
@@ -1313,7 +1360,7 @@ async function doLogout(){ await supabase.auth.signOut(); window.location.href =
 /* ---- Navigation par onglets (SPA) ---- */
 const loaded = {};
 const TAB_TITLES = {
-  overview: 'Tableau de bord', stats: 'Statistiques & revenus', courses: 'Cours à valider', teachers: 'Candidatures formateurs',
+  overview: 'Tableau de bord', stats: 'Statistiques & revenus', payouts: 'Versements aux formateurs', courses: 'Cours à valider', teachers: 'Candidatures formateurs',
   certificates: 'Certificats', users: 'Utilisateurs', products: 'Produits numériques', content: 'Blog & Actualités',
   forms: 'Formulaires', gallery: 'Galerie', pages: 'Contenu des pages', messages: 'Messages', settings: 'Paramètres du site'
 };
@@ -1329,7 +1376,7 @@ function showTab(tab){
   if (!loaded[tab]){
     loaded[tab] = true;
     ({courses: loadCourses, teachers: loadTeachers, certificates: loadCertificates,
-      users: loadUsers, products: loadProducts, messages: loadMessages, stats: loadStats, forms: loadForms,
+      users: loadUsers, products: loadProducts, messages: loadMessages, stats: loadStats, forms: loadForms, payouts: loadPayouts,
       content: loadContentList, gallery: loadGallery, settings: loadSettings, pages: loadPageEditor})[tab]?.();
   }
 }
@@ -1636,6 +1683,103 @@ let revResizeTimer = null;
 window.addEventListener('resize', () => {
   clearTimeout(revResizeTimer);
   revResizeTimer = setTimeout(() => { if (OV.data && !document.getElementById('tab-overview').classList.contains('hidden')) renderRevenueChart(); }, 200);
+});
+
+
+/* ---- Versements aux formateurs ---- */
+const PAYOUT_METHODS = { moncash: 'MonCash', natcash: 'NatCash', virement: 'Virement bancaire', especes: 'Espèces', autre: 'Autre' };
+let payoutBalances = [];
+async function loadPayouts(){
+  const balBody = document.getElementById('payoutBalanceBody');
+  try {
+    const [courses, products, orders, pOrders, payouts] = await Promise.all([
+      fetchAllRows(() => supabase.from('courses').select('id, teacher_id, profiles(id, full_name, email, role)')),
+      fetchAllRows(() => supabase.from('digital_products').select('id, seller_id, profiles(id, full_name, email, role)')),
+      fetchAllRows(() => supabase.from('orders').select('course_id, amount').eq('status', 'paye')),
+      fetchAllRows(() => supabase.from('product_orders').select('product_id, amount').eq('status', 'paye')),
+      fetchAllRows(() => supabase.from('teacher_payouts').select('id, teacher_id, amount, method, reference, note, paid_at, profiles!teacher_payouts_teacher_id_fkey(full_name)').order('paid_at', { ascending: false }))
+    ]);
+    const people = {};
+    const person = (prof) => {
+      if (!prof?.id) return null;
+      if (!people[prof.id]) people[prof.id] = { id: prof.id, name: prof.full_name || 'Sans nom', email: prof.email || '', isAdmin: prof.role === 'admin', due: 0, paid: 0 };
+      return people[prof.id];
+    };
+    const courseOwner = {}; courses.forEach(c => { courseOwner[c.id] = c.profiles; person(c.profiles); });
+    const prodOwner = {}; products.forEach(p => { prodOwner[p.id] = p.profiles; person(p.profiles); });
+    orders.forEach(o => { const pr = person(courseOwner[o.course_id]); if (pr && !pr.isAdmin) pr.due += Number(o.amount || 0) * TEACHER_SHARE; });
+    pOrders.forEach(o => { const pr = person(prodOwner[o.product_id]); if (pr && !pr.isAdmin) pr.due += Number(o.amount || 0) * PRODUCT_SELLER_SHARE; });
+    payouts.forEach(p => { if (people[p.teacher_id]) people[p.teacher_id].paid += Number(p.amount || 0); else people[p.teacher_id] = { id: p.teacher_id, name: p.profiles?.full_name || 'Sans nom', email: '', isAdmin: false, due: 0, paid: Number(p.amount || 0) }; });
+    payoutBalances = Object.values(people).filter(p => !p.isAdmin).sort((a, b) => (b.due - b.paid) - (a.due - a.paid));
+    const due = payoutBalances.reduce((a, p) => a + p.due, 0), paid = payoutBalances.reduce((a, p) => a + p.paid, 0);
+    const cards = document.querySelectorAll('#payoutCards .dash-stat-card b');
+    cards[0].textContent = formatHTG(due);
+    cards[1].textContent = formatHTG(paid);
+    cards[2].textContent = formatHTG(Math.max(0, due - paid));
+    cards[3].textContent = payouts.length;
+    balBody.innerHTML = payoutBalances.length ? payoutBalances.map(p => {
+      const rest = p.due - p.paid;
+      return `<tr><td>${escapeHtml(p.name)}${p.email ? `<br><span class="small-muted">${escapeHtml(p.email)}</span>` : ''}</td>
+        <td>${formatHTG(p.due)}</td><td>${formatHTG(p.paid)}</td>
+        <td><strong style="color:${rest > 0 ? '#B57200' : 'var(--success)'};">${formatHTG(rest)}</strong></td>
+        <td>${rest > 0 ? `<button class="btn-mini" type="button" data-pay="${p.id}" data-amount="${rest.toFixed(2)}">Verser</button>` : '<span class="status-pill ok">À jour</span>'}</td></tr>`;
+    }).join('') : '<tr><td colspan="5">Aucun formateur avec des ventes.</td></tr>';
+    balBody.querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => openPayoutForm(b.dataset.pay, b.dataset.amount)));
+    const hist = document.getElementById('payoutHistoryBody');
+    hist.innerHTML = payouts.length ? payouts.map(p => `<tr>
+        <td>${escapeHtml(p.profiles?.full_name || people[p.teacher_id]?.name || '—')}</td>
+        <td>${formatDate(p.paid_at)}</td><td><strong>${formatHTG(p.amount)}</strong></td>
+        <td>${escapeHtml(PAYOUT_METHODS[p.method] || p.method)}</td>
+        <td>${escapeHtml(p.reference || '—')}${p.note ? `<br><span class="small-muted">${escapeHtml(p.note)}</span>` : ''}</td>
+        <td><button class="icon-btn danger" type="button" data-del-payout="${p.id}" title="Supprimer">&times;</button></td></tr>`).join('')
+      : '<tr><td colspan="6">Aucun versement enregistré.</td></tr>';
+    hist.querySelectorAll('[data-del-payout]').forEach(b => b.addEventListener('click', async () => {
+      if (!(await showConfirm('Supprimer ce versement de l’historique ?'))) return;
+      const { error } = await supabase.from('teacher_payouts').delete().eq('id', b.dataset.delPayout);
+      if (error){ showAlert('Erreur : ' + error.message); return; }
+      loadPayouts();
+    }));
+  } catch (err){
+    balBody.innerHTML = `<tr><td colspan="5">Erreur : ${escapeHtml(err?.message || String(err))}</td></tr>`;
+  }
+}
+function openPayoutForm(teacherId, amount){
+  const sel = document.getElementById('poTeacher');
+  sel.innerHTML = payoutBalances.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (reste ${escapeHtml(formatHTG(p.due - p.paid))})</option>`).join('');
+  if (!payoutBalances.length) sel.innerHTML = '<option value="">Aucun formateur</option>';
+  if (teacherId) sel.value = teacherId;
+  document.getElementById('poAmount').value = amount && Number(amount) > 0 ? amount : '';
+  document.getElementById('poMethod').value = 'moncash';
+  document.getElementById('poDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('poRef').value = '';
+  document.getElementById('poNote').value = '';
+  document.getElementById('payoutMsg').style.display = 'none';
+  document.getElementById('payoutForm').classList.remove('hidden');
+  document.getElementById('payoutForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+document.getElementById('newPayoutBtn').addEventListener('click', () => openPayoutForm(null, null));
+document.getElementById('poCancelBtn').addEventListener('click', () => document.getElementById('payoutForm').classList.add('hidden'));
+document.getElementById('poSaveBtn').addEventListener('click', async () => {
+  const msg = document.getElementById('payoutMsg');
+  const show = (txt, err) => { msg.textContent = txt; msg.style.color = err ? '#C0392B' : '#1D9A6C'; msg.style.display = 'block'; };
+  const teacher_id = document.getElementById('poTeacher').value;
+  const amount = Math.round(Number(document.getElementById('poAmount').value) * 100) / 100;
+  const d = document.getElementById('poDate').value;
+  if (!teacher_id){ show('Choisissez un bénéficiaire.', true); return; }
+  if (!(amount > 0)){ show('Le montant doit être supérieur à 0.', true); return; }
+  const btn = document.getElementById('poSaveBtn');
+  btn.disabled = true;
+  const { error } = await supabase.from('teacher_payouts').insert({
+    teacher_id, amount,
+    method: document.getElementById('poMethod').value,
+    reference: document.getElementById('poRef').value.trim() || null,
+    note: document.getElementById('poNote').value.trim() || null,
+    paid_at: d ? new Date(d + 'T12:00:00').toISOString() : new Date().toISOString()
+  });
+  btn.disabled = false;
+  if (error){ show('Erreur : ' + error.message, true); return; }
+  document.getElementById('payoutForm').classList.add('hidden');
+  loadPayouts();
 });
 
 /* ---- Formulaires (type Google Forms) ---- */

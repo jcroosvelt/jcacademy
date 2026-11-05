@@ -665,6 +665,7 @@ footer a:hover{color:var(--gold);}
       <div id="dEnrollArea">
         <button class="btn btn-primary btn-block" id="dEnrollBtn">Chargement...</button>
       </div>
+      <p class="enroll-note hidden" id="dSeatsNote" style="font-weight:700;"></p>
       <button class="btn btn-outline btn-block" id="shareCourseBtn" data-share-type="course" style="margin-top:10px;">Partager ce cours</button>
       <ul class="sidebar-list">
         <li class="hidden" id="dStartRow"><span>Début du cours</span><b id="dStartRowText">—</b></li>
@@ -878,9 +879,31 @@ let currentSession = null;
     }
   }
 
+  await loadSeats(course);
   if (notStarted) setupPreEnrollment(course, session);
   else setupEnrollButton(course);
 })();
+
+/* ===== Nombre de places maximum ===== */
+let courseFull = false;
+async function loadSeats(course){
+  if (!course.max_seats) return;
+  const { data: taken, error } = await supabase.rpc('course_seats_taken', { p_course_id: course.id });
+  if (error) return;
+  const left = Math.max(0, course.max_seats - (Number(taken) || 0));
+  courseFull = left === 0;
+  const note = document.getElementById('dSeatsNote');
+  note.classList.remove('hidden');
+  note.style.color = courseFull ? '#B23B3B' : (left <= 5 ? '#B57200' : 'var(--navy)');
+  note.textContent = courseFull ? 'Complet : toutes les places sont prises.'
+    : (left === 1 ? 'Plus qu’une place disponible' : `${left} places disponibles sur ${course.max_seats}`);
+}
+function renderFull(){
+  document.getElementById('dEnrollArea').innerHTML = '<button class="btn btn-primary btn-block" type="button" disabled>Cours complet</button>';
+}
+function enrollErrorText(error){
+  return /COURS_COMPLET/.test(error?.message || '') ? 'Désolé, ce cours est complet : toutes les places sont prises.' : 'Erreur : ' + (error?.message || '');
+}
 
 /* ===== Pre-inscription (cours dont la date de debut n'est pas encore arrivee) ===== */
 function courseNotStarted(course){
@@ -917,13 +940,14 @@ async function setupPreEnrollment(course, session){
 
   /* Cours gratuit : la pre-inscription est une inscription normale, leçons verrouillees jusqu'a la date */
   if (!(course.price > 0)){
+    if (courseFull){ renderFull(); return; }
     area.innerHTML = `<button class="btn btn-primary btn-block" id="preEnrollBtn" type="button">Me pré-inscrire gratuitement</button>
       <p class="enroll-note">Votre place est enregistrée tout de suite. Les leçons s'ouvrent le jour du début.</p>`;
     document.getElementById('preEnrollBtn').addEventListener('click', async (e) => {
       if (!session){ window.location.href = loginUrl; return; }
       e.target.disabled = true; e.target.textContent = 'Inscription...';
       const { error } = await supabase.from('enrollments').insert({ user_id: session.user.id, course_id: course.id, progress: 0 });
-      if (error){ await showAlert('Erreur : ' + error.message); e.target.disabled = false; e.target.textContent = 'Me pré-inscrire gratuitement'; return; }
+      if (error){ await showAlert(enrollErrorText(error)); e.target.disabled = false; e.target.textContent = 'Me pré-inscrire gratuitement'; return; }
       window.location.href = 'dashboard-etudiant.html';
     });
     return;
@@ -950,6 +974,7 @@ async function setupPreEnrollment(course, session){
     return;
   }
 
+  if (courseFull){ renderFull(); return; }
   area.innerHTML = `<button class="btn btn-primary btn-block" id="reserveBtn" type="button">Réserver ma place gratuitement</button>
     <p class="enroll-note">Aucun paiement maintenant. Vous paierez ${course.price} HTG avant le début du cours.<br>
     <a href="${payUrl}" style="color:var(--navy);font-weight:600;">Ou payer dès maintenant</a></p>`;
@@ -958,7 +983,7 @@ async function setupPreEnrollment(course, session){
     e.target.disabled = true; e.target.textContent = 'Réservation...';
     const { error } = await supabase.from('course_reservations').insert({ course_id: course.id, user_id: session.user.id });
     if (error && !/duplicate|unique/i.test(error.message)){
-      await showAlert('Erreur : ' + error.message);
+      await showAlert(enrollErrorText(error));
       e.target.disabled = false; e.target.textContent = 'Réserver ma place gratuitement';
       return;
     }
@@ -1089,6 +1114,7 @@ function renderModules(modules, course){
 
 function setupEnrollButton(course){
   const btn = document.getElementById('dEnrollBtn');
+  if (courseFull){ btn.textContent = 'Cours complet'; btn.disabled = true; return; }
   if (course.price > 0){
     btn.textContent = `Acheter ce cours — ${course.price} HTG`;
     btn.addEventListener('click', () => {
@@ -1105,7 +1131,7 @@ function setupEnrollButton(course){
       btn.textContent = 'Inscription...';
       const { error } = await supabase.from('enrollments').insert({ user_id: currentSession.user.id, course_id: course.id, progress: 0 });
       if (error){
-        showAlert('Erreur : ' + error.message);
+        showAlert(enrollErrorText(error));
         btn.disabled = false;
         return;
       }

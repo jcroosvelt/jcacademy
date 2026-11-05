@@ -50,10 +50,10 @@ async function shareContent(type, id, title){
 
   try {
     await navigator.clipboard.writeText(shareUrl);
-    alert('Lien copié : ' + shareUrl);
+    if (window.showAlert) window.showAlert('Lien copié : ' + shareUrl);
   } catch (_e) {
-    // Dernier recours si le presse-papiers n'est pas accessible.
-    prompt('Copiez ce lien :', shareUrl);
+    // Dernier recours si le presse-papiers n'est pas accessible (fenêtre stylée de modal.js).
+    if (window.showPrompt) window.showPrompt('Copiez ce lien :', shareUrl);
   }
 }
 

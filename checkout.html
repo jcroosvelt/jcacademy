@@ -771,7 +771,7 @@ const card = document.getElementById('checkoutCard');
 
   let item = null;
   if (type === 'course'){
-    const { data } = await supabase.from('courses').select('id, title, price, max_seats').eq('slug', slug).eq('status', 'publie').single();
+    const { data } = await supabase.from('courses').select('id, title, price').eq('slug', slug).eq('status', 'publie').single();
     item = data;
   } else if (type === 'product'){
     const { data } = await supabase.from('digital_products').select('id, title, price').eq('slug', slug).eq('status', 'publie').single();
@@ -786,24 +786,6 @@ const card = document.getElementById('checkoutCard');
     card.innerHTML = '<p class="small-muted">Cet article est gratuit — aucun paiement nécessaire.</p>';
     return;
   }
-  /* Cours avec un nombre de places limite : on bloque le paiement si c'est complet,
-     sauf pour une personne qui a deja sa place (reservation) */
-  if (type === 'course' && item.max_seats){
-    const [{ data: taken }, { data: myRes }, { data: myEnr }] = await Promise.all([
-      supabase.rpc('course_seats_taken', { p_course_id: item.id }),
-      supabase.from('course_reservations').select('id').eq('course_id', item.id).eq('user_id', session.user.id).maybeSingle(),
-      supabase.from('enrollments').select('id').eq('course_id', item.id).eq('user_id', session.user.id).maybeSingle()
-    ]);
-    if (myEnr){
-      card.innerHTML = '<p>Vous êtes déjà inscrit à ce cours.</p><a href="dashboard-etudiant.html" class="btn btn-primary btn-block" style="margin-top:14px;">Mon espace</a>';
-      return;
-    }
-    if (!myRes && (Number(taken) || 0) >= item.max_seats){
-      card.innerHTML = '<p><strong>Ce cours est complet.</strong> Toutes les places sont prises, le paiement n’est plus possible.</p>';
-      return;
-    }
-  }
-
   card.innerHTML = `
     <div class="checkout-item">
       <span>${escapeHtml(item.title)}</span>

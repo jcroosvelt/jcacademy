@@ -552,6 +552,10 @@ footer a:hover{color:var(--gold);}
 .dash-welcome::after{content:"";position:absolute;right:-30px;top:-30px;width:150px;height:150px;background:var(--gold);opacity:.18;clip-path:polygon(50% 0,100% 100%,0 100%);}
 .dash-welcome h2{color:#fff;margin:0 0 6px;font-size:22px;}
 .dash-welcome p{color:rgba(255,255,255,.75);margin:0;font-size:13.5px;}
+.table-scroll{border:1px solid var(--border);border-radius:14px;}
+.table-scroll .data-table{min-width:600px;word-break:normal;overflow-wrap:normal;}
+.table-scroll .data-table th,.table-scroll .data-table td:not(:first-child){white-space:nowrap;}
+.table-scroll .data-table td:first-child{min-width:170px;}
 .rev-select{padding:8px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:13px;background:#fff;}
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
 @media (max-width:700px){.dash-stats{grid-template-columns:1fr 1fr;}}
@@ -758,11 +762,6 @@ footer a:hover{color:var(--gold);}
                   <label>Prix (HTG — 0 pour gratuit)</label>
                   <input type="number" id="cPrice" min="0" step="1" value="0" required>
                 </div>
-              </div>
-              <div class="form-group">
-                <label>Nombre de places maximum (facultatif)</label>
-                <input type="number" id="cMaxSeats" min="1" step="1" placeholder="Illimité">
-                <p class="small-muted" style="margin:6px 0 0;">Laissez vide pour un nombre de places illimité. Quand toutes les places sont prises, les inscriptions et réservations sont fermées.</p>
               </div>
               <div class="form-group">
                 <label>Langue du cours</label>
@@ -1145,14 +1144,6 @@ async function loadCoursesList(){
     (ens || []).forEach(e => { enrollCount[e.course_id] = (enrollCount[e.course_id] || 0) + 1; });
     (res || []).forEach(r => { reservCount[r.course_id] = (reservCount[r.course_id] || 0) + 1; });
   }
-  /* Places prises pour les cours avec un nombre de places limite */
-  const seatsTaken = {};
-  await Promise.all(data.filter(c => c.max_seats).map(async c => {
-    const { data: n } = await supabase.rpc('course_seats_taken', { p_course_id: c.id });
-    seatsTaken[c.id] = Number(n) || 0;
-  }));
-  const seatsLine = (c) => c.max_seats
-    ? `<div class="meta">${seatsTaken[c.id] || 0} / ${c.max_seats} places prises${(seatsTaken[c.id] || 0) >= c.max_seats ? ' · <strong style="color:#B23B3B;">Complet</strong>' : ''}</div>` : '';
   const startLine = (c) => {
     if (!futureIds.includes(c.id)) return '';
     const d = new Date(c.start_date).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
@@ -1169,7 +1160,6 @@ async function loadCoursesList(){
           <span class="status-pill ${statusClass[c.status]}" style="margin-left:8px;">${statusLabel[c.status]}</span>
         </div>
         ${startLine(c)}
-        ${seatsLine(c)}
         ${c.status === 'rejete' && c.rejection_reason ? `<div class="meta" style="color:#B23B3B;">Motif : ${escapeHtml(c.rejection_reason)}</div>` : ''}
       </div>
       <div class="actions">
@@ -1247,7 +1237,6 @@ async function openCourseEditor(courseId){
   document.getElementById('cStartDate').value = toLocalInputValue(c.start_date);
   document.getElementById('cCategory').value = c.category || '';
   document.getElementById('cPrice').value = c.price;
-  document.getElementById('cMaxSeats').value = c.max_seats || '';
   document.getElementById('cLanguage').value = c.language || 'fr';
   document.querySelector(`input[name="cTrack"][value="${c.track}"]`).checked = true;
   document.querySelector(`input[name="cFinal"][value="${c.final_assessment_type}"]`).checked = true;
@@ -1289,7 +1278,6 @@ async function saveCourse(targetStatus){
     start_date: document.getElementById('cStartDate').value ? new Date(document.getElementById('cStartDate').value).toISOString() : null,
     category: document.getElementById('cCategory').value.trim(),
     price: Number(document.getElementById('cPrice').value) || 0,
-    max_seats: Math.floor(Number(document.getElementById('cMaxSeats').value)) > 0 ? Math.floor(Number(document.getElementById('cMaxSeats').value)) : null,
     language: document.getElementById('cLanguage').value,
     track: document.querySelector('input[name="cTrack"]:checked').value,
     final_assessment_type: document.querySelector('input[name="cFinal"]:checked').value,

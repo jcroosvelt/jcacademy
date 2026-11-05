@@ -850,11 +850,11 @@ async function downloadProduct(productId, isFree){
   btn.textContent = isFree ? 'Télécharger gratuitement' : 'Télécharger mes fichiers';
 
   if (!res.ok || !data.files){
-    alert("Erreur lors de la préparation du téléchargement.");
+    showAlert("Erreur lors de la préparation du téléchargement.");
     return;
   }
   if (data.files.length === 0){
-    alert("Aucun fichier n'est encore attaché à ce produit.");
+    showAlert("Aucun fichier n'est encore attaché à ce produit.");
     return;
   }
   data.files.forEach(f => window.open(f.url, '_blank'));

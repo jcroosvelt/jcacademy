@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hors connexion — JC Academy</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0C2C74">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/site.webmanifest">
+<style>
+:root{--navy:#0C2C74;--navy-dark:#071D52;--gold:#F5A800;--text:#14213D;--muted:#5B6B85;}
+*{box-sizing:border-box;}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:linear-gradient(180deg,#fff 0%,#F7F9FC 100%);}
+.box{max-width:420px;width:100%;text-align:center;}
+.box img{width:96px;height:96px;margin:0 auto 18px;display:block;}
+h1{font-size:24px;color:var(--navy-dark);margin:0 0 10px;}
+p{color:var(--muted);line-height:1.6;margin:0 0 24px;font-size:15px;}
+button{background:var(--navy);color:#fff;border:none;border-radius:12px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+button:hover{background:var(--navy-dark);}
+.motto{margin-top:28px;font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <img src="/icon-192.png" alt="JC Academy">
+    <h1>Vous êtes hors connexion</h1>
+    <p>Impossible de joindre JC Academy pour le moment. Vérifiez votre connexion Internet, puis réessayez.</p>
+    <button type="button" id="retryBtn">Réessayer</button>
+    <div class="motto">Learn. Lead. Inspire.</div>
+  </div>
+<script>
+document.getElementById('retryBtn').addEventListener('click', function(){ window.location.reload(); });
+window.addEventListener('online', function(){ window.location.reload(); });
+</script>
+</body>
+</html>

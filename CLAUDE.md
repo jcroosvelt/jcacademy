@@ -16,7 +16,7 @@
 - **Paiement** : Kobara / MonCash (fonctions `create-kobara-payment`, `kobara-webhook`).
 - **Emails** : Resend (fonctions `send-email`, `course-reminders`).
 - **Anti-robot** : Cloudflare Turnstile, sitekey `0x4AAAAAAE6yRaiyGrQSxeNh`.
-- **Déploiement** : Vercel, en déposant les fichiers à plat (pas de dossier parent dans le zip).
+- **Déploiement** : le projet Vercel est relié au dépôt GitHub `jcroosvelt/jcacademy`. Tout envoi sur `main` est mis en ligne automatiquement (1 à 2 minutes).
 
 ## 3. Fichiers clés
 - `index.html`, `courses.html`, `course-detail.html`, `checkout.html`, `products.html`, `product-detail.html`

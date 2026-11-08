@@ -1114,6 +1114,12 @@ function selectLesson(lessonId){
 async function loadVideoPlayer(lessonId, videoId){
   const wrap = document.getElementById('videoPlayerWrap');
   if (!wrap) return;
+  /* Video YouTube / Vimeo : lecture directe (la leçon elle-meme reste protegee par les regles d'acces) */
+  if (/^https:\/\//.test(videoId || '')){
+    const html = window.JCRich.sanitize(`<iframe src="${escapeHtml(videoId)}"></iframe>`);
+    wrap.innerHTML = html ? `<div class="rich-content">${html}</div>` : '<p style="color:#C0392B;">Impossible de charger la vidéo pour le moment.</p>';
+    return;
+  }
   const { data: { session } } = await supabase.auth.getSession();
   const res = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/bunny-get-playback', {
     method: 'POST',

@@ -1372,7 +1372,7 @@ async function loadLessons(moduleId, box){
 
   const list = (data||[]).map((l,i) => `
     <div class="lesson-row">
-      <span>${i+1}. ${escapeHtml(l.title)} ${l.video_url ? '<span class="small-muted">(vidéo)</span>' : ''}</span>
+      <span>${i+1}. ${escapeHtml(l.title)} ${l.video_url ? `<span class="small-muted">(${/^https:/.test(l.video_url) ? (/vimeo/.test(l.video_url) ? 'vidéo Vimeo' : 'vidéo YouTube') : 'vidéo'})</span>` : ''}</span>
       <button class="icon-btn danger" data-action="delete-lesson" data-id="${l.id}">&times;</button>
     </div>
   `).join('') || '<p class="small-muted">Aucune leçon.</p>';
@@ -1385,7 +1385,12 @@ async function loadLessons(moduleId, box){
         <div id="newLessonContent-${moduleId}"></div>
       </div>
       <div class="form-group">
-        <label>Vidéo</label>
+        <label>Vidéo YouTube ou Vimeo (gratuit)</label>
+        <input type="url" id="videoLink-${moduleId}" placeholder="https://www.youtube.com/watch?v=...">
+        <p class="small-muted" style="margin:6px 0 0;">Conseil : mettez la vidéo en « Non répertoriée » sur YouTube. Laissez vide si vous envoyez un fichier vidéo ci-dessous.</p>
+      </div>
+      <div class="form-group">
+        <label>Ou fichier vidéo (hébergement Bunny)</label>
         <div class="upload-box" id="videoBox-${moduleId}">Cliquez pour choisir une vidéo</div>
         <input type="file" accept="video/*" class="file-input-hidden" id="videoInput-${moduleId}">
         <p class="small-muted" id="videoName-${moduleId}"></p>
@@ -1428,6 +1433,14 @@ async function loadLessons(moduleId, box){
 
     const addBtn = box.querySelector('[data-action="add-lesson"]');
     let videoId = null;
+
+    /* Lien YouTube / Vimeo : enregistre l'adresse d'integration (lecture directe, sans Bunny) */
+    const videoLink = document.getElementById(`videoLink-${moduleId}`).value.trim();
+    if (videoLink && pendingVideo){ showAlert('Choisissez soit un lien YouTube/Vimeo, soit un fichier vidéo, pas les deux.'); return; }
+    if (videoLink){
+      videoId = window.JCRich.videoEmbedUrl(videoLink);
+      if (!videoId){ showAlert('Lien vidéo non reconnu. Collez un lien YouTube (youtube.com ou youtu.be) ou Vimeo.'); return; }
+    }
 
     if (pendingVideo){
       addBtn.disabled = true;

@@ -560,6 +560,7 @@ footer a:hover{color:var(--gold);}
 .table-scroll .data-table{min-width:600px;word-break:normal;overflow-wrap:normal;}
 .table-scroll .data-table th,.table-scroll .data-table td:not(:first-child){white-space:nowrap;}
 .table-scroll .data-table td:first-child{min-width:170px;}
+.lesson-row .icon-btn:disabled{opacity:.35;cursor:not-allowed;}
 .rev-select{padding:8px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:13px;background:#fff;}
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
 @media (max-width:700px){.dash-stats{grid-template-columns:1fr 1fr;}}
@@ -1366,6 +1367,107 @@ document.getElementById('addModuleBtn').addEventListener('click', async () => {
   loadModules(currentCourseId);
 });
 
+/* ---- Modification d'une lecon ---- */
+function lessonVideoLabel(url){
+  if (!url) return 'Aucune vidéo';
+  if (/^https:/.test(url)) return /vimeo/.test(url) ? 'Vidéo Vimeo' : 'Vidéo YouTube';
+  return 'Vidéo hébergée sur Bunny';
+}
+async function openLessonEdit(lesson, moduleId, box){
+  box.querySelectorAll('.lesson-edit').forEach(el => { el.classList.add('hidden'); el.innerHTML = ''; });
+  const wrap = document.getElementById('lessonEdit-' + lesson.id);
+  const id = lesson.id;
+  wrap.innerHTML = `
+    <div class="editor-card" style="margin:8px 0 16px;">
+      <h4 style="margin-top:0;">Modifier la leçon</h4>
+      <div class="form-group"><label>Titre</label><input type="text" id="leTitle-${id}" maxlength="300"></div>
+      <div class="form-group"><label>Texte théorique</label><div id="leContent-${id}"></div></div>
+      <div class="form-group">
+        <label>Vidéo actuelle : <span style="font-weight:600;color:var(--navy);">${escapeHtml(lessonVideoLabel(lesson.video_url))}</span></label>
+        <select id="leVideoMode-${id}">
+          <option value="keep">Garder la vidéo actuelle</option>
+          <option value="link">Remplacer par un lien YouTube ou Vimeo</option>
+          <option value="file">Remplacer par un fichier vidéo (Bunny)</option>
+          ${lesson.video_url ? '<option value="none">Retirer la vidéo</option>' : ''}
+        </select>
+      </div>
+      <div class="form-group hidden" id="leLinkRow-${id}"><input type="url" id="leLink-${id}" placeholder="https://www.youtube.com/watch?v=..."></div>
+      <div class="form-group hidden" id="leFileRow-${id}">
+        <input type="file" accept="video/*" id="leFile-${id}">
+        <div id="leProgress-${id}" class="hidden" style="margin-top:8px;">
+          <div style="background:var(--surface);border-radius:8px;height:8px;overflow:hidden;"><div id="leProgressBar-${id}" style="background:var(--gold);height:100%;width:0%;"></div></div>
+          <p class="small-muted" id="leProgressLabel-${id}">0%</p>
+        </div>
+      </div>
+      <div class="review-actions">
+        <button class="btn-mini" type="button" id="leCancel-${id}">Annuler</button>
+        <button class="btn btn-primary btn-sm" type="button" id="leSave-${id}">Enregistrer</button>
+      </div>
+    </div>`;
+  wrap.classList.remove('hidden');
+  document.getElementById('leTitle-' + id).value = lesson.title || '';
+  const modeSel = document.getElementById('leVideoMode-' + id);
+  modeSel.addEventListener('change', () => {
+    document.getElementById('leLinkRow-' + id).classList.toggle('hidden', modeSel.value !== 'link');
+    document.getElementById('leFileRow-' + id).classList.toggle('hidden', modeSel.value !== 'file');
+  });
+  document.getElementById('leCancel-' + id).addEventListener('click', () => { wrap.classList.add('hidden'); wrap.innerHTML = ''; });
+  let ed = null;
+  try {
+    ed = await JCEditor.create(document.getElementById('leContent-' + id), {
+      placeholder: 'Texte théorique de la leçon...', minHeight: 220, uploadImage: uploadTeacherContentImage
+    });
+    ed.setHTML(lesson.content || '');
+  } catch (err){
+    document.getElementById('leContent-' + id).textContent = err.message || "L'éditeur n'a pas pu être chargé.";
+  }
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.getElementById('leSave-' + id).addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const title = document.getElementById('leTitle-' + id).value.trim();
+    if (!ed){ showAlert("L'éditeur n'est pas chargé, réessayez dans un instant."); return; }
+    if (!title || !ed.getText()){ showAlert('Titre et texte théorique obligatoires.'); return; }
+    const payload = { title, content: ed.getHTML() };
+    const mode = modeSel.value;
+    if (mode === 'none') payload.video_url = null;
+    if (mode === 'link'){
+      const embed = window.JCRich.videoEmbedUrl(document.getElementById('leLink-' + id).value.trim());
+      if (!embed){ showAlert('Lien vidéo non reconnu. Collez un lien YouTube (youtube.com ou youtu.be) ou Vimeo.'); return; }
+      payload.video_url = embed;
+    }
+    btn.disabled = true;
+    if (mode === 'file'){
+      const file = document.getElementById('leFile-' + id).files[0];
+      if (!file){ showAlert('Choisissez un fichier vidéo.'); btn.disabled = false; return; }
+      document.getElementById('leProgress-' + id).classList.remove('hidden');
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const initRes = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/bunny-init-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+          body: JSON.stringify({ title: file.name })
+        });
+        const initData = await initRes.json();
+        if (!initRes.ok) throw new Error((initData.error || "Erreur d'initialisation Bunny") + (initData.details ? ' — ' + initData.details : ''));
+        await uploadVideoToBunny(file, initData, (pct) => {
+          document.getElementById('leProgressBar-' + id).style.width = pct + '%';
+          document.getElementById('leProgressLabel-' + id).textContent = pct + '%';
+        });
+        payload.video_url = initData.videoId;
+      } catch (err){
+        showAlert('Erreur upload vidéo : ' + (err?.message || err));
+        btn.disabled = false;
+        return;
+      }
+    }
+    const { error } = await supabase.from('lessons').update(payload).eq('id', id);
+    btn.disabled = false;
+    if (error){ showAlert('Erreur : ' + error.message); return; }
+    loadLessons(moduleId, box);
+  });
+}
+
 async function loadLessons(moduleId, box){
   const { data, error } = await supabase.from('lessons').select('*').eq('module_id', moduleId).order('position', { ascending: true });
   if (error){ box.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
@@ -1373,8 +1475,14 @@ async function loadLessons(moduleId, box){
   const list = (data||[]).map((l,i) => `
     <div class="lesson-row">
       <span>${i+1}. ${escapeHtml(l.title)} ${l.video_url ? `<span class="small-muted">(${/^https:/.test(l.video_url) ? (/vimeo/.test(l.video_url) ? 'vidéo Vimeo' : 'vidéo YouTube') : 'vidéo'})</span>` : ''}</span>
-      <button class="icon-btn danger" data-action="delete-lesson" data-id="${l.id}">&times;</button>
+      <span style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="icon-btn" data-action="move-lesson" data-dir="-1" data-idx="${i}" title="Monter" ${i === 0 ? 'disabled' : ''}>&#8593;</button>
+        <button class="icon-btn" data-action="move-lesson" data-dir="1" data-idx="${i}" title="Descendre" ${i === data.length - 1 ? 'disabled' : ''}>&#8595;</button>
+        <button class="btn-mini" data-action="edit-lesson" data-idx="${i}">Modifier</button>
+        <button class="icon-btn danger" data-action="delete-lesson" data-id="${l.id}" title="Supprimer">&times;</button>
+      </span>
     </div>
+    <div class="lesson-edit hidden" id="lessonEdit-${l.id}"></div>
   `).join('') || '<p class="small-muted">Aucune leçon.</p>';
 
   box.innerHTML = list + `
@@ -1417,6 +1525,25 @@ async function loadLessons(moduleId, box){
     uploadImage: uploadTeacherContentImage
   }).then(ed => { lessonEditor = ed; })
     .catch(err => { document.getElementById(`newLessonContent-${moduleId}`).textContent = err.message || "L'éditeur n'a pas pu être chargé."; });
+
+  /* Reordonner : on echange la position avec la lecon voisine */
+  box.querySelectorAll('[data-action="move-lesson"]').forEach(btn => btn.addEventListener('click', async () => {
+    const i = Number(btn.dataset.idx), j = i + Number(btn.dataset.dir);
+    if (j < 0 || j >= data.length) return;
+    const list = data.slice();
+    [list[i], list[j]] = [list[j], list[i]];
+    btn.disabled = true;
+    const results = await Promise.all(list.map((l, k) => l.position === k + 1 ? null
+      : supabase.from('lessons').update({ position: k + 1 }).eq('id', l.id)));
+    const err = results.find(r => r && r.error);
+    if (err) showAlert('Erreur : ' + err.error.message);
+    loadLessons(moduleId, box);
+  }));
+
+  /* Modifier une lecon existante */
+  box.querySelectorAll('[data-action="edit-lesson"]').forEach(btn => btn.addEventListener('click', () => {
+    openLessonEdit(data[Number(btn.dataset.idx)], moduleId, box);
+  }));
 
   box.querySelectorAll('[data-action="delete-lesson"]').forEach(btn => btn.addEventListener('click', async () => {
     if (!(await showConfirm('Supprimer cette leçon ?'))) return;

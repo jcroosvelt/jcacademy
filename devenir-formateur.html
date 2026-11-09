@@ -633,6 +633,7 @@ footer a:hover{color:var(--gold);}
 </div>
 
 <div class="container" style="max-width:640px;">
+  <div id="feeNotice" class="fee-notice hidden"></div>
   <div id="appCard" class="editor-card">
     <p class="small-muted">Chargement...</p>
   </div>
@@ -644,6 +645,8 @@ footer a:hover{color:var(--gold);}
 .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;}
 .form-group textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;min-height:140px;}
 .upload-box{border:1.5px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:var(--surface);}
+.fee-notice{background:#FFF3D6;border:1px solid #F5D78A;border-radius:14px;padding:14px 18px;margin-bottom:16px;color:var(--navy-dark);font-size:14.5px;line-height:1.5;}
+.fee-notice b{font-family:'Sora',sans-serif;}
 .result-box{padding:20px;border-radius:12px;text-align:center;}
 .result-box.pass{background:#E4F7EE;color:var(--success);}
 .result-box.pending{background:var(--surface);color:var(--text-muted);}
@@ -761,11 +764,61 @@ document.getElementById('navBurger').addEventListener('click', () => document.ge
 
 const card = document.getElementById('appCard');
 let session = null, profile = null;
+let teacherFee = 0;
+const resultParam = new URLSearchParams(window.location.search).get('result');
+function formatHTG(n){ return Number(n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' HTG'; }
+async function loadTeacherFee(){
+  const { data } = await supabase.from('site_settings').select('value').eq('key', 'teacher_fee').maybeSingle();
+  const v = Number(data?.value?.amount);
+  teacherFee = v > 0 ? v : 0;
+}
+function showFeeNotice(){
+  if (!(teacherFee > 0)) return;
+  const el = document.getElementById('feeNotice');
+  el.innerHTML = `Pour devenir formateur, il faut un paiement : <b>${formatHTG(teacherFee)}</b>, réglé par MonCash juste après l'envoi de votre candidature.`;
+  el.classList.remove('hidden');
+}
+async function hasPaidFee(applicationId){
+  const { data } = await supabase.from('application_payments').select('id').eq('application_id', applicationId).eq('status', 'paye').limit(1);
+  return !!(data && data.length);
+}
+function renderPaymentStep(app){
+  const fee = Number(app.fee_required) || 0;
+  const cancelled = resultParam === 'cancel' ? `<p class="small-muted" style="margin:0 0 12px;">Le paiement a été annulé. Vous pouvez réessayer quand vous voulez.</p>` : '';
+  card.innerHTML = `<div class="result-box pending"><h3>Candidature enregistrée</h3><p>Il reste à payer les frais de candidature : <b>${formatHTG(fee)}</b>.</p></div>
+    <div style="margin-top:14px;">${cancelled}
+      <p id="payMsg" style="display:none;font-size:13.5px;color:#C0392B;margin:0 0 10px;"></p>
+      <button type="button" class="btn btn-primary btn-block" id="payFeeBtn">Payer ${formatHTG(fee)} avec MonCash</button>
+    </div>`;
+  document.getElementById('payFeeBtn').addEventListener('click', async (e) => {
+    const btn = e.currentTarget, msg = document.getElementById('payMsg');
+    btn.disabled = true; btn.textContent = 'Redirection en cours...'; msg.style.display = 'none';
+    try {
+      const { data: { session: cur } } = await supabase.auth.getSession();
+      if (!cur) { window.location.href = 'login.html?next=' + encodeURIComponent(window.location.pathname); return; }
+      const res = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/create-kobara-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cur.access_token}` },
+        body: JSON.stringify({ itemType: 'application', itemId: app.id, provider: 'moncash' })
+      });
+      const data = await res.json();
+      if (data.error === 'already_paid'){ window.location.href = 'devenir-formateur.html'; return; }
+      if (!res.ok || !data.checkout_url) throw new Error(data.error || 'Erreur inconnue');
+      window.location.href = data.checkout_url;
+    } catch (_err){
+      btn.disabled = false; btn.textContent = 'Payer ' + formatHTG(fee) + ' avec MonCash';
+      msg.textContent = 'Impossible de démarrer le paiement pour le moment. Réessayez ou contactez le support.';
+      msg.style.display = 'block';
+    }
+  });
+}
 
 (async () => {
   const { data: { session: s } } = await supabase.auth.getSession();
   session = s;
+  await loadTeacherFee();
   if (!session){
+    showFeeNotice();
     card.innerHTML = `<p>Vous devez avoir un compte étudiant pour postuler.</p><a href="register.html" class="btn btn-primary btn-block" style="margin-top:14px;">Créer un compte</a>
       <a href="login.html" class="btn btn-outline btn-block" style="margin-top:10px;">Se connecter</a>`;
     return;
@@ -786,6 +839,18 @@ let session = null, profile = null;
 
   const { data: existing } = await supabase.from('teacher_applications').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
 
+  if (existing && existing.status === 'en_attente' && Number(existing.fee_required) > 0){
+    if (await hasPaidFee(existing.id)){
+      card.innerHTML = `<div class="result-box pass"><h3>Frais de candidature payés</h3><p>Merci ! Votre candidature est en cours d'examen. Nous reviendrons vers vous bientôt.</p></div>`;
+    } else if (resultParam === 'success'){
+      card.innerHTML = `<div class="result-box pending"><h3>Paiement reçu, confirmation en cours</h3><p>MonCash nous confirme votre paiement. Cela peut prendre quelques instants.</p></div>
+        <button type="button" class="btn btn-outline btn-block" style="margin-top:14px;" onclick="window.location.href='devenir-formateur.html'">Actualiser</button>`;
+    } else {
+      showFeeNotice();
+      renderPaymentStep(existing);
+    }
+    return;
+  }
   if (existing && existing.status === 'en_attente'){
     card.innerHTML = `<div class="result-box pending"><h3>Candidature en cours d'examen</h3><p>Nous étudions votre candidature et reviendrons vers vous bientôt.</p></div>`;
     return;
@@ -794,6 +859,8 @@ let session = null, profile = null;
     card.innerHTML = `<div class="result-box fail"><h3>Candidature précédente non retenue</h3><p>Vous pouvez soumettre une nouvelle candidature ci-dessous.</p></div>`;
   }
 
+  showFeeNotice();
+  if (!(existing && existing.status === 'rejete')) card.innerHTML = '';  /* retire le texte « Chargement... » */
   renderForm();
 })();
 
@@ -843,11 +910,11 @@ function renderForm(){
       cvUrl = path;
     }
 
-    const { error } = await supabase.from('teacher_applications').insert({
+    const { data: created, error } = await supabase.from('teacher_applications').insert({
       user_id: session.user.id,
       bio: document.getElementById('appBio').value.trim(),
       cv_url: cvUrl
-    });
+    }).select('id, fee_required').single();
 
     btn.disabled = false;
     btn.textContent = 'Envoyer ma candidature';
@@ -855,6 +922,8 @@ function renderForm(){
     if (error){
       msg.style.color = '#C0392B';
       msg.textContent = 'Erreur : ' + error.message;
+    } else if (created && Number(created.fee_required) > 0){
+      renderPaymentStep(created);
     } else {
       card.innerHTML = `<div class="result-box pending"><h3>Candidature envoyée !</h3><p>Nous l'étudierons rapidement et reviendrons vers vous.</p></div>`;
     }

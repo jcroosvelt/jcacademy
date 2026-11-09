@@ -1252,6 +1252,14 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           <div class="form-group"><label>YouTube</label><input type="text" id="sYoutube" placeholder="https://youtube.com/..."></div>
           <div class="form-group"><label>LinkedIn</label><input type="text" id="sLinkedin" placeholder="https://linkedin.com/..."></div>
         </div>
+        <div class="editor-card">
+          <h4 style="margin-top:0;">Devenir formateur</h4>
+          <div class="form-group">
+            <label>Frais de candidature (HTG)</label>
+            <input type="number" id="sTeacherFee" min="0" step="1" placeholder="0">
+            <p class="small-muted" style="margin:6px 0 0;">Montant que chaque personne doit payer par MonCash en envoyant sa candidature pour devenir formateur. Mettez 0 pour que ce soit gratuit. Le nouveau prix s'applique aux candidatures envoyées après l'enregistrement.</p>
+          </div>
+        </div>
         <p id="settingsMsg" style="display:none;font-size:13.5px;"></p>
         <button class="btn btn-primary" id="saveSettingsBtn">Enregistrer les paramètres</button>
       </section>
@@ -2379,14 +2387,20 @@ async function loadTeachers(){
   const wrap = document.getElementById('teachersList');
   const { data, error } = await supabase
     .from('teacher_applications')
-    .select('id, bio, cv_url, status, created_at, user_id, profiles(full_name, email)')
+    .select('id, bio, cv_url, status, created_at, user_id, fee_required, profiles(full_name, email), application_payments(status)')
     .eq('status', 'en_attente')
     .order('created_at', { ascending: true });
 
   if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
   if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Aucune candidature en attente.</p>'; return; }
 
-  wrap.innerHTML = data.map(a => `
+  wrap.innerHTML = data.map(a => {
+    const fee = Number(a.fee_required) || 0;
+    const paid = (a.application_payments || []).some(p => p.status === 'paye');
+    const feeLine = fee > 0
+      ? `<p style="margin:0 0 10px;font-size:13.5px;font-weight:700;color:${paid ? 'var(--success)' : '#B23B3B'};">Frais de candidature : ${formatHTG(fee)} — ${paid ? 'payé' : 'non payé pour le moment'}</p>`
+      : '';
+    return `
     <div class="review-card" data-id="${a.id}">
       <div class="review-card-head">
         <div>
@@ -2395,16 +2409,21 @@ async function loadTeachers(){
         </div>
         <span class="badge badge-paid">En attente</span>
       </div>
+      ${feeLine}
       <p>${escapeHtml(a.bio || '')}</p>
       ${a.cv_url ? `<a href="${a.cv_url}" target="_blank" class="btn-mini" style="display:inline-block;text-decoration:none;">Voir le CV</a>` : ''}
       <div class="review-actions">
-        <button class="btn-approve" data-action="approve-app" data-id="${a.id}" data-user="${a.user_id}" data-email="${a.profiles?.email || ''}" data-name="${escapeHtml(a.profiles?.full_name || '')}">Approuver</button>
+        <button class="btn-approve" data-action="approve-app" data-fee="${fee}" data-paid="${paid ? '1' : '0'}" data-id="${a.id}" data-user="${a.user_id}" data-email="${a.profiles?.email || ''}" data-name="${escapeHtml(a.profiles?.full_name || '')}">Approuver</button>
         <button class="btn-reject" data-action="reject-app" data-id="${a.id}" data-email="${a.profiles?.email || ''}" data-name="${escapeHtml(a.profiles?.full_name || '')}">Rejeter</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   wrap.querySelectorAll('[data-action="approve-app"]').forEach(btn => btn.addEventListener('click', async () => {
+    if (Number(btn.dataset.fee) > 0 && btn.dataset.paid !== '1'){
+      if (!(await showConfirm('Les frais de candidature (' + formatHTG(btn.dataset.fee) + ') ne sont pas payés. Approuver quand même ?'))) return;
+    }
     btn.disabled = true;
     const { error: e1 } = await supabase.from('teacher_applications').update({ status: 'approuve' }).eq('id', btn.dataset.id);
     const { error: e2 } = await supabase.from('profiles').update({ role: 'formateur' }).eq('id', btn.dataset.user);
@@ -2769,10 +2788,19 @@ async function loadSettings(){
   document.getElementById('sInstagram').value = settings.reseaux?.instagram || '';
   document.getElementById('sYoutube').value = settings.reseaux?.youtube || '';
   document.getElementById('sLinkedin').value = settings.reseaux?.linkedin || '';
+  const fee = Number(settings.teacher_fee?.amount);
+  document.getElementById('sTeacherFee').value = fee > 0 ? fee : 0;
 }
 
 document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
   const btn = document.getElementById('saveSettingsBtn');
+  const feeRaw = document.getElementById('sTeacherFee').value.trim();
+  const feeNum = feeRaw === '' ? 0 : Number(feeRaw);
+  if (!Number.isFinite(feeNum) || feeNum < 0 || feeNum > 1000000){
+    const m = document.getElementById('settingsMsg');
+    m.textContent = 'Les frais de candidature doivent être un montant entre 0 et 1 000 000 HTG.'; m.style.color = '#C0392B'; m.style.display = 'block';
+    return;
+  }
   btn.disabled = true; btn.textContent = 'Enregistrement...';
 
   const rows = [
@@ -2786,6 +2814,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
       telephone: document.getElementById('sContactTel').value.trim(),
       adresse: document.getElementById('sContactAdresse').value.trim(),
     }},
+    { key: 'teacher_fee', value: { amount: Math.round(feeNum) } },
     { key: 'reseaux', value: {
       facebook: document.getElementById('sFacebook').value.trim(),
       instagram: document.getElementById('sInstagram').value.trim(),

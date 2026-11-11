@@ -1035,7 +1035,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           <div class="dash-stat-card"><b>—</b><span>Ventes de cours (brut)</span></div>
           <div class="dash-stat-card"><b>—</b><span>Ventes de produits (brut)</span></div>
           <div class="dash-stat-card"><b>—</b><span>Part des formateurs</span></div>
-          <div class="dash-stat-card"><b>—</b><span>Revenu JC Academy</span></div>
+          <div class="dash-stat-card"><b>—</b><span>Revenu JC Academy<br><small id="revenueFeeNote" style="opacity:.75;">ventes + frais de candidature</small></span></div>
         </div>
 
         <h4 style="margin:8px 0 10px;">Revenus par formateur</h4>
@@ -1740,9 +1740,17 @@ async function loadPayouts(){
       return `<tr><td>${escapeHtml(p.name)}${p.email ? `<br><span class="small-muted">${escapeHtml(p.email)}</span>` : ''}</td>
         <td>${formatHTG(p.due)}</td><td>${formatHTG(p.paid)}</td>
         <td><strong style="color:${rest > 0 ? '#B57200' : 'var(--success)'};">${formatHTG(rest)}</strong></td>
-        <td>${rest > 0 ? `<button class="btn-mini" type="button" data-pay="${p.id}" data-amount="${rest.toFixed(2)}">Verser</button>` : '<span class="status-pill ok">À jour</span>'}</td></tr>`;
+        <td>${rest > 0 ? `<button class="btn-mini" type="button" data-pay="${p.id}" data-amount="${rest.toFixed(2)}">Verser</button> <button class="btn-mini" type="button" data-markpaid="${p.id}" data-amount="${rest.toFixed(2)}" data-name="${escapeHtml(p.name)}" title="Enregistre d’un clic le solde restant comme payé">Marquer payé</button>` : '<span class="status-pill ok">À jour</span>'}</td></tr>`;
     }).join('') : '<tr><td colspan="5">Aucun formateur avec des ventes.</td></tr>';
     balBody.querySelectorAll('[data-pay]').forEach(b => b.addEventListener('click', () => openPayoutForm(b.dataset.pay, b.dataset.amount)));
+    balBody.querySelectorAll('[data-markpaid]').forEach(b => b.addEventListener('click', async () => {
+      const amt = Number(b.dataset.amount);
+      if (!(await showConfirm('Marquer ' + formatHTG(amt) + ' comme payé à ' + b.dataset.name + ' ? Un versement du solde restant sera enregistré à la date du jour.'))) return;
+      b.disabled = true;
+      const { error } = await supabase.from('teacher_payouts').insert({ teacher_id: b.dataset.markpaid, amount: amt, method: 'autre', note: 'Marqué payé en un clic', paid_at: new Date().toISOString() });
+      if (error){ b.disabled = false; showAlert('Erreur : ' + error.message); return; }
+      loadPayouts();
+    }));
     const hist = document.getElementById('payoutHistoryBody');
     hist.innerHTML = payouts.length ? payouts.map(p => `<tr>
         <td>${escapeHtml(p.profiles?.full_name || people[p.teacher_id]?.name || '—')}</td>
@@ -2188,17 +2196,18 @@ async function loadStats(){
   statsLoading = true;
   const liveEl = document.getElementById('statsLiveStatus');
   try {
-    const [courses, enrollmentsAll, ordersAll, products, productOrdersAll] = await Promise.all([
+    const [courses, enrollmentsAll, ordersAll, products, productOrdersAll, feePaymentsAll] = await Promise.all([
       fetchAllRows(() => supabase.from('courses').select('id, title, price, status, teacher_id, profiles(full_name, email, role)').order('created_at', { ascending: false })),
       fetchAllRows(() => supabase.from('enrollments').select('course_id, created_at')),
       fetchAllRows(() => supabase.from('orders').select('course_id, amount, created_at').eq('status', 'paye')),
       fetchAllRows(() => supabase.from('digital_products').select('id, title, price, seller_id, profiles(full_name, email, role)').order('created_at', { ascending: false })),
-      fetchAllRows(() => supabase.from('product_orders').select('product_id, amount, created_at').eq('status', 'paye'))
+      fetchAllRows(() => supabase.from('product_orders').select('product_id, amount, created_at').eq('status', 'paye')),
+      fetchAllRows(() => supabase.from('application_payments').select('amount, created_at').eq('status', 'paye'))
     ]);
     /* Filtre par periode (inscriptions et commandes payees) */
     const range = statsRange();
     const keep = r => !range || inRange(r.created_at, range.from, range.to);
-    const enrollments = enrollmentsAll.filter(keep), orders = ordersAll.filter(keep), productOrders = productOrdersAll.filter(keep);
+    const enrollments = enrollmentsAll.filter(keep), orders = ordersAll.filter(keep), productOrders = productOrdersAll.filter(keep), feePayments = feePaymentsAll.filter(keep);
     liveEl.dataset.period = range ? range.label : '';
 
     const enrollCount = {};
@@ -2288,7 +2297,9 @@ async function loadStats(){
     cards[0].textContent = formatHTG(courseGross);
     cards[1].textContent = formatHTG(productGross);
     cards[2].textContent = formatHTG(payoutTotal);
-    cards[3].textContent = formatHTG(courseGross + productGross - payoutTotal);
+    const feeTotal = feePayments.reduce((acc, o) => acc + Number(o.amount || 0), 0);
+    cards[3].textContent = formatHTG(courseGross + productGross - payoutTotal + feeTotal);
+    document.getElementById('revenueFeeNote').textContent = feeTotal > 0 ? 'dont ' + formatHTG(feeTotal) + ' de frais de candidature' : 'ventes + frais de candidature';
 
     liveEl.dataset.updated = new Date().toLocaleTimeString('fr-FR');
     renderStatsLiveStatus();

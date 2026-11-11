@@ -768,7 +768,7 @@ let currentProduct = null;
 
   const { data: product, error } = await supabase
     .from('digital_products')
-    .select('*, profiles(full_name)')
+    .select('*, profiles(full_name), shops(name, slug)')
     .eq('slug', slug)
     .eq('status', 'publie')
     .single();
@@ -799,6 +799,7 @@ function renderProduct(p){
   document.getElementById('pSeller').innerHTML = p.seller_id
     ? `Par <a href="formateur-profil.html?id=${p.seller_id}" style="color:#fff;text-decoration:underline;">${escapeHtml(p.profiles?.full_name || 'Vendeur')}</a>`
     : 'Par JC Academy';
+  if (p.shops && p.shops.slug) document.getElementById('pSeller').innerHTML += ` · Boutique <a href="boutique.html?slug=${encodeURIComponent(p.shops.slug)}" style="color:#fff;text-decoration:underline;">${escapeHtml(p.shops.name)}</a>`;
   document.getElementById('pCategory').textContent = p.category || 'Ressource';
   document.getElementById('pPrice').textContent = p.price > 0 ? p.price + ' HTG' : 'Gratuit';
   if (p.cover_url){

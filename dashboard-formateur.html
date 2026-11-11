@@ -667,6 +667,7 @@ footer a:hover{color:var(--gold);}
         <a href="#" class="active" data-tab="overview">Vue d'ensemble</a>
         <a href="#" data-tab="courses">Mes cours</a>
         <a href="#" data-tab="submissions">Soumissions à corriger</a>
+        <a href="#" data-tab="shop">Ma boutique</a>
         <a href="#" data-tab="products">Mes produits numériques</a>
         <a href="#" data-tab="revenue">Mes revenus</a>
         <a href="mon-profil.html">Mon profil</a>
@@ -822,6 +823,34 @@ footer a:hover{color:var(--gold);}
         <div id="submissionsList"><p class="small-muted">Chargement...</p></div>
       </section>
 
+      <section id="tab-shop" class="tab-panel hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0;">Ma boutique</h3>
+          <a class="btn btn-outline btn-sm hidden" id="viewShopLink" href="#" target="_blank" rel="noopener">Voir ma boutique</a>
+        </div>
+        <p class="small-muted" style="margin:0 0 14px;">Votre boutique présente vos produits numériques (ebooks, modèles, ressources). Chaque produit est vérifié par l'équipe de JC Academy avant sa mise en vente.</p>
+        <div class="editor-card">
+          <div class="form-group"><label>Nom de la boutique</label><input type="text" id="shName" maxlength="80" placeholder="Ex. : Les ressources de Marie"></div>
+          <div class="form-group"><label>Présentation</label><textarea id="shDesc" maxlength="2000" placeholder="Décrivez ce que vous proposez dans votre boutique..."></textarea></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Logo</label>
+              <div class="upload-box" id="shLogoBox">Cliquez pour choisir un logo</div>
+              <input type="file" accept="image/*" class="file-input-hidden" id="shLogoInput">
+              <img id="shLogoPreview" class="thumb-preview">
+            </div>
+            <div class="form-group">
+              <label>Image de couverture</label>
+              <div class="upload-box" id="shCoverBox">Cliquez pour choisir une image</div>
+              <input type="file" accept="image/*" class="file-input-hidden" id="shCoverInput">
+              <img id="shCoverPreview" class="thumb-preview">
+            </div>
+          </div>
+          <p id="shopMsg" style="display:none;font-size:13.5px;"></p>
+          <div class="review-actions"><button type="button" class="btn btn-primary" id="saveShopBtn">Enregistrer la boutique</button></div>
+        </div>
+      </section>
+
       <section id="tab-products" class="tab-panel hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
           <h3 style="margin:0;">Mes produits numériques</h3>
@@ -850,7 +879,7 @@ footer a:hover{color:var(--gold);}
           <p id="productMsg" style="display:none;font-size:13.5px;"></p>
           <div class="review-actions">
             <button type="button" class="btn-mini" id="cancelProductBtn">Annuler</button>
-            <button type="button" class="btn btn-primary" id="saveProductBtn">Enregistrer et publier</button>
+            <button type="button" class="btn btn-primary" id="saveProductBtn">Soumettre pour validation</button>
           </div>
         </div>
         <div id="productsList"><p class="small-muted">Chargement...</p></div>
@@ -1042,6 +1071,7 @@ let isAdmin = false;
     back.href = 'dashboard-admin.html'; back.textContent = "Retour à l'administration";
     document.querySelector('.dash-nav').insertBefore(back, document.querySelector('.dash-nav a[href="mon-profil.html"]'));
     document.getElementById('submitReviewBtn').textContent = 'Publier le cours';
+    document.getElementById('saveProductBtn').textContent = 'Enregistrer et publier';
   }
   loadOverview();
   /* Liens directs depuis l'administration : ?new=1 (nouveau cours) ou ?course=ID (modifier un cours) */
@@ -1066,7 +1096,7 @@ document.querySelectorAll('.dash-nav a[data-tab]').forEach(link => {
     document.getElementById('tab-' + tab).classList.remove('hidden');
     if (!loaded[tab]){
       loaded[tab] = true;
-      ({courses: loadCoursesList, submissions: loadSubmissions, products: loadProducts, revenue: loadRevenue})[tab]?.();
+      ({courses: loadCoursesList, submissions: loadSubmissions, products: loadProducts, revenue: loadRevenue, shop: loadShopTab})[tab]?.();
     }
   });
 });
@@ -1743,7 +1773,61 @@ async function reviewSubmission(id, status){
 /* ---- Produits numeriques ---- */
 let pendingProductThumb = null, pendingProductFile = null, editingProductId = null;
 
-document.getElementById('newProductBtn').addEventListener('click', () => openProductEditor(null));
+document.getElementById('newProductBtn').addEventListener('click', async () => {
+  if (!(await ensureShop())) return;
+  openProductEditor(null);
+});
+
+/* ---- Boutique du formateur ---- */
+let myShop = null, pendingShopLogo = null, pendingShopCover = null;
+async function fetchMyShop(){
+  const { data } = await supabase.from('shops').select('*').eq('owner_id', currentUser.id).maybeSingle();
+  myShop = data || null; return myShop;
+}
+async function ensureShop(){
+  if (await fetchMyShop()) return true;
+  await showAlert("Pour vendre des produits, créez d'abord votre boutique.");
+  document.querySelector('.dash-nav a[data-tab="shop"]').click();
+  return false;
+}
+function showShopMsg(text, isError){ const el = document.getElementById('shopMsg'); el.textContent = text; el.style.color = isError ? '#C0392B' : '#1D9A6C'; el.style.display = 'block'; }
+async function loadShopTab(){
+  await fetchMyShop();
+  pendingShopLogo = pendingShopCover = null;
+  document.getElementById('shName').value = myShop?.name || '';
+  document.getElementById('shDesc').value = myShop?.description || '';
+  [['shLogoPreview', myShop?.logo_url], ['shCoverPreview', myShop?.cover_url]].forEach(([id, url]) => { const im = document.getElementById(id); im.classList.toggle('show', !!url); if (url) im.src = url; });
+  const link = document.getElementById('viewShopLink');
+  link.classList.toggle('hidden', !myShop); if (myShop) link.href = 'boutique.html?slug=' + encodeURIComponent(myShop.slug);
+  document.getElementById('saveShopBtn').textContent = myShop ? 'Enregistrer la boutique' : 'Créer ma boutique';
+  if (myShop && myShop.status === 'suspendu') showShopMsg("Votre boutique est suspendue : elle n'est plus visible du public. Contactez l'administration.", true);
+  else document.getElementById('shopMsg').style.display = 'none';
+}
+[['shLogoBox', 'shLogoInput', 'shLogoPreview', (f) => { pendingShopLogo = f; }], ['shCoverBox', 'shCoverInput', 'shCoverPreview', (f) => { pendingShopCover = f; }]].forEach(([box, input, prev, set]) => {
+  document.getElementById(box).addEventListener('click', () => document.getElementById(input).click());
+  document.getElementById(input).addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024){ showShopMsg('Choisissez une image de 5 Mo maximum.', true); return; }
+    set(file); const im = document.getElementById(prev); im.src = URL.createObjectURL(file); im.classList.add('show');
+  });
+});
+document.getElementById('saveShopBtn').addEventListener('click', async () => {
+  const name = document.getElementById('shName').value.trim();
+  if (name.length < 2){ showShopMsg('Le nom de la boutique est obligatoire (2 caractères minimum).', true); return; }
+  const payload = { name, description: document.getElementById('shDesc').value.trim() };
+  for (const [file, key, label] of [[pendingShopLogo, 'logo_url', 'logo'], [pendingShopCover, 'cover_url', 'couverture']]){
+    if (!file) continue;
+    const path = `${currentUser.id}/shop-${label}-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const { error: upErr } = await supabase.storage.from('products').upload(path, file, { upsert: true });
+    if (upErr){ showShopMsg('Erreur upload image : ' + upErr.message, true); return; }
+    payload[key] = supabase.storage.from('products').getPublicUrl(path).data.publicUrl;
+  }
+  let res;
+  if (myShop) res = await supabase.from('shops').update(payload).eq('id', myShop.id).select().single();
+  else { payload.owner_id = currentUser.id; payload.slug = slugify(name) + '-' + Math.random().toString(36).slice(2, 7); res = await supabase.from('shops').insert(payload).select().single(); }
+  if (res.error){ showShopMsg('Erreur : ' + res.error.message, true); return; }
+  myShop = res.data; loadShopTab(); showShopMsg('Boutique enregistrée.', false);
+});
 document.getElementById('cancelProductBtn').addEventListener('click', () => document.getElementById('productEditor').classList.add('hidden'));
 document.getElementById('pThumbUploadBox').addEventListener('click', () => document.getElementById('pThumbInput').click());
 document.getElementById('pThumbInput').addEventListener('change', (e) => {
@@ -1784,7 +1868,7 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
     price: Number(document.getElementById('pPrice').value) || 0,
     category: document.getElementById('pCategory').value.trim(),
     seller_id: currentUser.id,
-    status: 'publie'
+    shop_id: myShop ? myShop.id : null
   };
 
   if (pendingProductThumb){
@@ -1800,6 +1884,10 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
     payload.file_urls = [{ name: pendingProductFile.name, path }];
   }
 
+  /* Un produit d'un formateur est mis en vente seulement après validation par l'administration */
+  const prev = editingProductId ? (productsCache.find(p => p.id === editingProductId) || {}) : {};
+  if (isAdmin) payload.status = 'publie';
+  else if (!editingProductId || prev.status === 'brouillon' || prev.status === 'rejete'){ payload.status = 'en_attente'; payload.rejection_reason = null; }
   let result;
   if (editingProductId){
     result = await supabase.from('digital_products').update(payload).eq('id', editingProductId).select().single();
@@ -1812,19 +1900,27 @@ document.getElementById('saveProductBtn').addEventListener('click', async () => 
 
   document.getElementById('productEditor').classList.add('hidden');
   loaded.products = false; loadProducts(); loadOverview();
+  if (!isAdmin) showAlert(result.data.status === 'publie' ? 'Produit enregistré.' : 'Produit envoyé pour validation. Il sera mis en vente dès son approbation par l\'équipe.');
 });
 
+let productsCache = [];
 async function loadProducts(){
   const wrap = document.getElementById('productsList');
   const { data, error } = await supabase.from('digital_products').select('*').eq('seller_id', currentUser.id).order('created_at', { ascending: false });
+  productsCache = data || [];
+  await fetchMyShop();
   if (error){ wrap.innerHTML = `<p class="empty-state">Erreur : ${escapeHtml(error.message)}</p>`; return; }
+  document.getElementById('noShopNote')?.remove();
+  if (!myShop) wrap.insertAdjacentHTML('beforebegin', '<p class="small-muted" id="noShopNote">Vous devez d\'abord <a href="#" id="goShopLink" style="color:var(--navy);font-weight:700;">créer votre boutique</a> pour vendre vos produits.</p>');
+  document.getElementById('goShopLink')?.addEventListener('click', (e) => { e.preventDefault(); document.querySelector('.dash-nav a[data-tab="shop"]').click(); });
   if (!data || data.length === 0){ wrap.innerHTML = '<p class="empty-state">Aucun produit numérique pour le moment.</p>'; return; }
 
   wrap.innerHTML = data.map(p => `
     <div class="course-row">
       <div>
         <h4>${escapeHtml(p.title)}</h4>
-        <div class="meta">${p.price > 0 ? p.price + ' HTG' : 'Gratuit'} · <span class="status-pill ${p.status==='publie'?'ok':'pending'}">${p.status==='publie'?'Publié':'Brouillon'}</span></div>
+        <div class="meta">${p.price > 0 ? p.price + ' HTG' : 'Gratuit'} · <span class="status-pill ${p.status==='publie'?'ok':p.status==='rejete'?'blocked':'pending'}">${{ publie:'Publié', en_attente:'En attente de validation', rejete:'Rejeté', brouillon:'Brouillon' }[p.status] || p.status}</span></div>
+        ${p.status === 'rejete' && p.rejection_reason ? `<div class="meta" style="color:#B23B3B;">Motif : ${escapeHtml(p.rejection_reason)}</div>` : ''}
       </div>
       <div class="actions">
         <button class="btn-mini" data-action="edit-product" data-id="${p.id}">Modifier</button>

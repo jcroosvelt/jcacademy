@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Aperçu du cours | JC Academy</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#0C2C74">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0C2C74;--navy-dark:#071D52;--navy-soft:#E7ECF7;--gold:#F5A800;--surface:#F7F9FC;--text:#14213D;--text-muted:#5B6B85;--border:#E4E9F2;--success:#1D9A6C;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:Inter,sans-serif;color:var(--text);background:var(--surface);line-height:1.6;}
+.bar{position:sticky;top:0;z-index:10;background:var(--navy-dark);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.bar b{font-family:Sora,sans-serif;font-size:14px;}
+.bar .tag{background:var(--gold);color:var(--navy-dark);font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px;}
+.bar .sp{flex:1;}
+.bar a{color:#fff;font-weight:600;font-size:13.5px;text-decoration:none;border:1px solid rgba(255,255,255,.35);padding:7px 14px;border-radius:9px;}
+.bar a:hover{background:rgba(255,255,255,.1);}
+.wrap{max-width:860px;margin:0 auto;padding:22px 16px 60px;}
+.hero{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px;}
+.hero img{width:100%;max-height:300px;object-fit:cover;display:block;}
+.hero .in{padding:22px;}
+.hero h1{font-family:Sora,sans-serif;color:var(--navy-dark);font-size:26px;margin:0 0 8px;line-height:1.25;}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.chip{font-size:12.5px;font-weight:600;background:var(--navy-soft);color:var(--navy);padding:5px 11px;border-radius:999px;}
+.chip.gold{background:#FFF3D6;color:#8A5A00;}
+.card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px;}
+.card h2{font-family:Sora,sans-serif;font-size:18px;color:var(--navy-dark);margin:0 0 12px;}
+.module{border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden;background:#fff;}
+.module > .mh{background:var(--navy-soft);padding:12px 18px;font-weight:700;color:var(--navy-dark);font-family:Sora,sans-serif;font-size:15px;}
+.lesson{padding:18px;border-top:1px solid var(--border);}
+.lesson h3{margin:0 0 10px;font-size:16px;color:var(--navy);}
+.lesson .vid{margin:14px 0 0;}
+.muted{color:var(--text-muted);font-size:13.5px;}
+.q{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:10px 0;background:var(--surface);}
+.q p{margin:0 0 8px;font-weight:600;}
+.q li{margin:3px 0;}
+.q li.ok{color:var(--success);font-weight:700;}
+.empty{padding:40px 16px;text-align:center;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="bar"><b>JC Academy</b><span class="tag">Aperçu administrateur</span><span class="muted" style="color:#C9D6EF;" id="barStatus"></span><span class="sp"></span><a href="dashboard-admin.html">Retour à l'administration</a><a href="#" id="editLink" style="display:none;">Modifier le cours</a></div>
+<div class="wrap" id="root"><div class="empty">Chargement du cours...</div></div>
+<script src="rich.js"></script>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const supabase = createClient('https://tzgwhhxxozujxnjjpucg.supabase.co', 'sb_publishable_V8gqxhUp1sNsLP0eT7oGsg_gKfkam_E');
+const esc = (s) => window.JCRich.escapeHtml(s);
+const STATUS = { brouillon: 'Brouillon', en_attente: 'En attente de validation', publie: 'Publié', rejete: 'Rejeté' };
+const root = document.getElementById('root');
+
+(async () => {
+  const id = new URLSearchParams(location.search).get('id');
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) { location.href = 'login.html'; return; }
+  const { data: me } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+  if (!me || !['admin', 'formateur'].includes(me.role)) { location.href = 'index.html'; return; }
+  if (!id) { root.innerHTML = '<div class="empty">Aucun cours indiqué.</div>'; return; }
+  const { data: c, error } = await supabase.from('courses').select('*, profiles(full_name)').eq('id', id).single();
+  if (error || !c) { root.innerHTML = '<div class="empty">Cours introuvable.</div>'; return; }
+  if (me.role !== 'admin' && c.teacher_id !== session.user.id) { location.href = 'index.html'; return; }
+  document.getElementById('barStatus').textContent = (STATUS[c.status] || c.status) + ' · par ' + (c.profiles?.full_name || 'Formateur');
+  const edit = document.getElementById('editLink'); edit.href = 'dashboard-formateur.html?course=' + c.id; edit.style.display = '';
+
+  const { data: mods } = await supabase.from('course_modules').select('*').eq('course_id', id).order('position', { ascending: true });
+  const modIds = (mods || []).map(m => m.id);
+  const [{ data: lessons }, { data: quizzes }] = await Promise.all([
+    modIds.length ? supabase.from('lessons').select('*').in('module_id', modIds).order('position', { ascending: true }) : Promise.resolve({ data: [] }),
+    modIds.length ? supabase.from('quizzes').select('*').in('module_id', modIds) : Promise.resolve({ data: [] })
+  ]);
+  const qIds = (quizzes || []).map(q => q.id);
+  const { data: questions } = qIds.length ? await supabase.from('quiz_questions').select('*').in('quiz_id', qIds).order('position', { ascending: true }) : { data: [] };
+
+  const price = Number(c.price) > 0 ? Number(c.price) + ' HTG' : 'Gratuit';
+  const start = c.start_date && new Date(c.start_date).getTime() > Date.now() ? 'Début le ' + new Date(c.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const nLessons = (lessons || []).length;
+  let html = `<div class="hero">${c.thumbnail_url ? `<img src="${esc(c.thumbnail_url)}" alt="">` : ''}<div class="in">
+    <h1>${esc(c.title)}</h1><div class="muted">${esc(c.short_description || '')}</div>
+    <div class="meta"><span class="chip gold">${price}</span><span class="chip">${c.track === 'diplome' ? 'Programme Diplôme' : 'Programme Certificat'}</span>${c.category ? `<span class="chip">${esc(c.category)}</span>` : ''}<span class="chip">${c.language === 'ht' ? 'Créole' : c.language === 'en' ? 'Anglais' : 'Français'}</span><span class="chip">${(mods || []).length} module(s) · ${nLessons} leçon(s)</span>${start ? `<span class="chip">${esc(start)}</span>` : ''}</div></div></div>`;
+  if (c.description) html += `<div class="card"><h2>Présentation du cours</h2><div class="rich-content">${window.JCRich.render(c.description)}</div></div>`;
+  if (c.prerequisites) html += `<div class="card"><h2>Prérequis</h2><p style="margin:0;">${esc(c.prerequisites)}</p></div>`;
+  if (!(mods || []).length) html += '<div class="card"><div class="empty">Ce cours ne contient encore aucun module.</div></div>';
+  (mods || []).forEach((m, mi) => {
+    const ls = (lessons || []).filter(l => l.module_id === m.id);
+    const qz = (quizzes || []).find(q => q.module_id === m.id);
+    const qs = qz ? (questions || []).filter(q => q.quiz_id === qz.id) : [];
+    html += `<div class="module"><div class="mh">Module ${mi + 1} : ${esc(m.title)}</div>`;
+    if (!ls.length) html += '<div class="lesson muted">Aucune leçon dans ce module.</div>';
+    ls.forEach((l, li) => {
+      html += `<div class="lesson"><h3>Leçon ${li + 1} : ${esc(l.title)}</h3><div class="rich-content">${window.JCRich.render(l.content) || '<p class="muted">Aucun texte.</p>'}</div>${l.video_url ? `<div class="vid" data-lesson="${l.id}" data-video="${esc(l.video_url)}"><p class="muted">Chargement de la vidéo...</p></div>` : ''}</div>`;
+    });
+    if (qs.length) {
+      html += `<div class="lesson"><h3>Quiz du module (${qs.length} question${qs.length > 1 ? 's' : ''})</h3>` + qs.map((q, i) => `<div class="q"><p>${i + 1}. ${esc(q.question)}</p><ol type="A">${(q.options || []).map((o, k) => `<li class="${k === q.correct_index ? 'ok' : ''}">${esc(o)}${k === q.correct_index ? ' (bonne réponse)' : ''}</li>`).join('')}</ol></div>`).join('') + '</div>';
+    }
+    html += '</div>';
+  });
+  root.innerHTML = html;
+
+  root.querySelectorAll('.vid').forEach(async (box) => {
+    const v = box.dataset.video;
+    if (/^https:\/\//.test(v)) {
+      const safe = window.JCRich.sanitize(`<iframe src="${esc(v)}"></iframe>`);
+      box.innerHTML = safe ? `<div class="rich-content">${safe}</div>` : '<p class="muted">Vidéo non reconnue.</p>';
+      return;
+    }
+    try {
+      const res = await fetch('https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/bunny-get-playback', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, body: JSON.stringify({ lessonId: box.dataset.lesson }) });
+      const d = await res.json();
+      if (!res.ok || !d.embedUrl) throw new Error('indisponible');
+      box.innerHTML = `<div style="position:relative;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#000;"><iframe src="${esc(d.embedUrl)}" loading="lazy" style="border:0;position:absolute;inset:0;width:100%;height:100%;" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe></div>`;
+    } catch (e) { box.innerHTML = '<p class="muted">La vidéo hébergée n\'a pas pu être chargée pour l\'aperçu.</p>'; }
+  });
+})();
+</script>
+</body>
+</html>

@@ -600,6 +600,7 @@ footer a:hover{color:var(--gold);}
       <a href="index.html" data-i18n="nav_accueil">Accueil</a>
       <a href="courses.html" data-i18n="nav_cours">Cours</a>
       <a href="products.html" data-i18n="nav_produits" class="active">Produits</a>
+      <a href="boutique.html">Boutiques</a>
       <a href="blog.html" data-i18n="nav_blog">Blog</a>
       <a href="actualites.html" data-i18n="nav_actualites">Actualités</a>
       <a href="formateurs.html" data-i18n="nav_formateurs">Nos formateurs</a>
@@ -643,6 +644,7 @@ footer a:hover{color:var(--gold);}
     <button class="filter-chip active" data-filter="all">Tous</button>
     <button class="filter-chip" data-filter="free">Gratuits</button>
     <button class="filter-chip" data-filter="paid">Payants</button>
+    <a class="filter-chip" href="boutique.html" style="text-decoration:none;">Voir les boutiques</a>
   </div>
 
   <p class="results-count" id="resultsCount">Chargement...</p>
@@ -768,7 +770,7 @@ async function loadProducts(){
   const grid = document.getElementById('productGrid');
   grid.innerHTML = '<p class="small-muted">Chargement...</p>';
 
-  let query = supabase.from('digital_products').select('*, profiles(full_name)', { count: 'exact' }).eq('status', 'publie');
+  let query = supabase.from('digital_products').select('*, profiles(full_name), shops(name)', { count: 'exact' }).eq('status', 'publie');
   query = applyFilterToQuery(query);
   const from = (currentPage - 1) * PAGE_SIZE;
   const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, from + PAGE_SIZE - 1);
@@ -792,7 +794,7 @@ async function loadProducts(){
           <span class="badge ${p.price > 0 ? 'badge-paid' : 'badge-free'}">${p.price > 0 ? 'Payant' : 'Gratuit'}</span>
         </div>
         <h3>${escapeHtml(p.title)}</h3>
-        <div class="course-meta">${escapeHtml(p.profiles?.full_name || 'JC Academy')}</div>
+        <div class="course-meta">${escapeHtml(p.shops?.name || p.profiles?.full_name || 'JC Academy')}</div>
         <div class="course-foot">
           <span class="price ${p.price === 0 ? 'free' : ''}">${p.price > 0 ? p.price + ' HTG' : 'Gratuit'}</span>
         </div>

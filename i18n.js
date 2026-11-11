@@ -39,6 +39,8 @@ const TRANSLATIONS = {
     carte_certificat_texte: "Des formations courtes et ciblées pour acquérir une compétence précise et obtenir un certificat reconnu en quelques semaines.",
     carte_diplome_titre: "Programme Diplôme",
     carte_diplome_texte: "Des cursus complets et approfondis, encadrés par des experts, menant à un diplôme valorisant votre parcours professionnel.",
+    carte_badge_titre: "Programme Badge",
+    carte_badge_texte: "Des parcours très courts pour valider une compétence et obtenir un badge numérique à partager.",
     voir_programmes: "Voir tous les programmes",
     explorer: "Explorer →",
 
@@ -81,6 +83,8 @@ const TRANSLATIONS = {
     carte_certificat_texte: "Short, focused training to gain a specific skill and earn a recognized certificate in a few weeks.",
     carte_diplome_titre: "Diploma Program",
     carte_diplome_texte: "Comprehensive, in-depth courses led by experts, leading to a diploma that enhances your professional profile.",
+    carte_badge_titre: "Badge Program",
+    carte_badge_texte: "Very short courses to validate a skill and earn a digital badge you can share.",
     voir_programmes: "View all programs",
     explorer: "Explore →",
 
@@ -123,6 +127,8 @@ const TRANSLATIONS = {
     carte_certificat_texte: "Formaciones cortas y específicas para adquirir una habilidad precisa y obtener un certificado reconocido en pocas semanas.",
     carte_diplome_titre: "Programa Diplomado",
     carte_diplome_texte: "Cursos completos y profundos, guiados por expertos, que conducen a un diplomado que valora tu trayectoria profesional.",
+    carte_badge_titre: "Programa Insignia",
+    carte_badge_texte: "Cursos muy cortos para validar una habilidad y obtener una insignia digital para compartir.",
     voir_programmes: "Ver todos los programas",
     explorer: "Explorar →",
 

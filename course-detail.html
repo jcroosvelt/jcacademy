@@ -999,9 +999,9 @@ function renderCourse(course){
   document.getElementById('dTeacher').innerHTML = course.teacher_id
     ? `Par <a href="formateur-profil.html?id=${course.teacher_id}" style="color:#fff;text-decoration:underline;">${escapeHtml(course.profiles?.full_name || 'Formateur')}</a>`
     : 'Par JC Academy';
-  document.getElementById('dTrackBadge').textContent = course.track === 'diplome' ? 'Programme Diplôme' : 'Programme Certificat';
+  document.getElementById('dTrackBadge').textContent = 'Programme ' + (({ badge: 'Badge', diplome: 'Diplôme' })[course.track] || 'Certificat');
   document.getElementById('dLanguage').textContent = ({fr:'Français', en:'Anglais', es:'Espagnol'})[course.language] || 'Français';
-  document.getElementById('dTrackText').textContent = course.track === 'diplome' ? 'Diplôme' : 'Certificat';
+  document.getElementById('dTrackText').textContent = ({ badge: 'Badge', diplome: 'Diplôme' })[course.track] || 'Certificat';
   document.getElementById('dFinalType').textContent = course.final_assessment_type === 'projet' ? 'Projet à soumettre' : 'Quiz final';
   document.getElementById('dPrice').textContent = course.price > 0 ? course.price + ' HTG' : 'Gratuit';
   document.getElementById('teacherBio').textContent = course.profiles?.bio || 'Aucune biographie disponible pour ce formateur.';
@@ -1081,7 +1081,7 @@ function renderModules(modules, course){
         <span class="status">Projet à soumettre</span>
       </div>
       <div class="module-body" id="module-body-final">
-        <p style="font-size:13.5px;color:var(--text-muted);">À la fin du parcours, soumettez un projet pour obtenir votre ${course.track === 'diplome' ? 'diplôme' : 'certificat'}.</p>
+        <p style="font-size:13.5px;color:var(--text-muted);">À la fin du parcours, soumettez un projet pour obtenir votre ${({ badge: 'badge', diplome: 'diplôme' })[course.track] || 'certificat'}.</p>
       </div>
     </div>
   ` : '');

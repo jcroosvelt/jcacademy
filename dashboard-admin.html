@@ -2357,7 +2357,7 @@ async function loadCourses(){
       <div class="review-card-head">
         <div>
           <h4>${escapeHtml(c.title)}</h4>
-          <div class="meta">Par ${escapeHtml(c.profiles?.full_name || 'Formateur')} · ${c.price > 0 ? c.price + ' HTG' : 'Gratuit'} · ${c.track === 'diplome' ? 'Programme Diplôme' : 'Programme Certificat'}</div>
+          <div class="meta">Par ${escapeHtml(c.profiles?.full_name || 'Formateur')} · ${c.price > 0 ? c.price + ' HTG' : 'Gratuit'} · Programme ${({ badge: 'Badge', diplome: 'Diplôme' })[c.track] || 'Certificat'}</div>
         </div>
         <span class="badge badge-paid">En attente</span>
       </div>

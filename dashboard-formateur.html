@@ -781,6 +781,7 @@ footer a:hover{color:var(--gold);}
                 <div class="form-group">
                   <label>Type de parcours</label>
                   <div class="radio-row">
+                    <label><input type="radio" name="cTrack" value="badge"> Badge</label>
                     <label><input type="radio" name="cTrack" value="certificat" checked> Certificat</label>
                     <label><input type="radio" name="cTrack" value="diplome"> Diplôme</label>
                   </div>
@@ -1207,7 +1208,7 @@ async function loadCoursesList(){
     <div class="course-row">
       <div>
         <h4>${escapeHtml(c.title)}</h4>
-        <div class="meta">${c.price > 0 ? c.price + ' HTG' : 'Gratuit'} · ${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}
+        <div class="meta">${c.price > 0 ? c.price + ' HTG' : 'Gratuit'} · ${({ badge: 'Badge', diplome: 'Diplôme' })[c.track] || 'Certificat'}
           <span class="status-pill ${statusClass[c.status]}" style="margin-left:8px;">${statusLabel[c.status]}</span>
         </div>
         ${startLine(c)}

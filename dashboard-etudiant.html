@@ -1270,8 +1270,8 @@ async function checkCourseCompletion(){
 async function loadCertificates(){
   const wrap = document.getElementById('certificatesList');
   const [{ data: certs }, { data: completed }, { data: myReviews }] = await Promise.all([
-    supabase.from('certificates').select('id, status, requested_at, issued_at, certificate_url, course_id, courses(title)').eq('user_id', currentUser.id).order('requested_at',{ascending:false}),
-    supabase.from('enrollments').select('course_id, courses(title)').eq('user_id', currentUser.id).eq('progress', 100),
+    supabase.from('certificates').select('id, status, requested_at, issued_at, certificate_url, course_id, courses(title, track)').eq('user_id', currentUser.id).order('requested_at',{ascending:false}),
+    supabase.from('enrollments').select('course_id, courses(title, track)').eq('user_id', currentUser.id).eq('progress', 100),
     supabase.from('reviews').select('course_id').eq('user_id', currentUser.id)
   ]);
 
@@ -1286,8 +1286,8 @@ async function loadCertificates(){
   if (eligibleWithoutCert.length){
     html += eligibleWithoutCert.map(e => `
       <div class="course-row">
-        <div><h4>${escapeHtml(e.courses.title)}</h4><div class="meta">Cours terminé — certificat disponible</div></div>
-        <button class="btn btn-gold btn-sm" data-action="request-cert" data-course="${e.course_id}">Demander mon certificat</button>
+        <div><h4>${escapeHtml(e.courses.title)}</h4><div class="meta">Cours terminé — ${({ badge: 'badge', diplome: 'diplôme' })[e.courses.track] || 'certificat'} disponible</div></div>
+        <button class="btn btn-gold btn-sm" data-action="request-cert" data-course="${e.course_id}">Demander mon ${({ badge: 'badge', diplome: 'diplôme' })[e.courses.track] || 'certificat'}</button>
       </div>
     `).join('');
   }

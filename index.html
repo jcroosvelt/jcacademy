@@ -373,12 +373,14 @@ img{max-width:100%;display:block;}
 .stars{color:var(--gold);font-size:13px;}
 
 /* ===== Programs ===== */
-.program-cards{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.program-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+@media (max-width:1000px){.program-cards{grid-template-columns:1fr 1fr;}}
 @media (max-width:800px){.program-cards{grid-template-columns:1fr;}}
 .program-card{
   border-radius:18px;padding:32px;position:relative;overflow:hidden;color:#fff;min-height:220px;
   display:flex;flex-direction:column;justify-content:space-between;
 }
+.program-card.badgec{background:linear-gradient(135deg,#127A55 0%,#1D9A6C 100%);}
 .program-card.cert{background:linear-gradient(135deg,var(--navy) 0%,#123A94 100%);}
 .program-card.diplome{background:linear-gradient(135deg,#B57200 0%, var(--gold) 100%);}
 .program-card h3{color:#fff;font-size:24px;margin:0 0 8px;}
@@ -688,12 +690,21 @@ footer a:hover{color:var(--gold);}
     <div class="section-head">
       <div>
         <span class="tag-label" data-i18n="programmes_eyebrow">Nos programmes</span>
-        <h2 id="pcProgrammesTitre">Deux parcours, un même objectif : votre réussite</h2>
+        <h2 id="pcProgrammesTitre">Trois parcours, un même objectif : votre réussite</h2>
       </div>
       <a href="courses.html" class="btn btn-outline" data-i18n="voir_programmes">Voir tous les programmes</a>
     </div>
 
     <div class="program-cards">
+      <div class="program-card badgec">
+        <div>
+          <h3 data-i18n="carte_badge_titre">Programme Badge</h3>
+          <p data-i18n="carte_badge_texte">Des parcours très courts pour valider une compétence et obtenir un badge numérique à partager.</p>
+        </div>
+        <a href="courses.html?type=badge" class="btn btn-gold" data-i18n="explorer">Explorer &#8594;</a>
+        <div class="program-icon"></div>
+      </div>
+
       <div class="program-card cert">
         <div>
           <h3 data-i18n="carte_certificat_titre">Programme Certificat</h3>

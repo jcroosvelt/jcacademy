@@ -487,6 +487,7 @@ footer a:hover{color:var(--gold);}
 @media (max-width:480px){.search-bar{padding:8px;gap:6px;}.search-bar input{padding:11px 10px;font-size:14px;}.search-bar .btn{padding:11px 14px;font-size:14px;}}
 .search-bar input:focus{outline:none;background:var(--surface);}
 .filters-row{display:flex;gap:10px;flex-wrap:wrap;margin:26px 0;align-items:center;}
+.badge-badge{background:#E4F7EE;color:#1D7A55;}
 .filter-chip{padding:9px 16px;border-radius:999px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;color:var(--text-muted);}
 .filter-chip.active{background:var(--navy);color:#fff;border-color:var(--navy);}
 .filter-chip.gold-active{background:var(--gold);color:var(--navy-dark);border-color:var(--gold);}
@@ -645,6 +646,7 @@ footer a:hover{color:var(--gold);}
     <button class="filter-chip active" data-filter="all">Tous</button>
     <button class="filter-chip" data-filter="free">Gratuits</button>
     <button class="filter-chip" data-filter="paid">Payants</button>
+    <button class="filter-chip" data-filter="badge">Badge</button>
     <button class="filter-chip" data-filter="certificat">Certificat</button>
     <button class="filter-chip" data-filter="diplome">Diplôme</button>
   </div>
@@ -766,6 +768,7 @@ let currentSearch = '';
 function applyFilterToQuery(query){
   if (currentFilter === 'free') query = query.eq('price', 0);
   if (currentFilter === 'paid') query = query.gt('price', 0);
+  if (currentFilter === 'badge') query = query.eq('track', 'badge');
   if (currentFilter === 'certificat') query = query.eq('track', 'certificat');
   if (currentFilter === 'diplome') query = query.eq('track', 'diplome');
   if (currentSearch) query = query.ilike('title', `%${currentSearch}%`);
@@ -805,7 +808,7 @@ async function loadCourses(){
         <div class="course-tags">
           ${soonBadge(c)}
           <span class="badge ${c.price > 0 ? 'badge-paid' : 'badge-free'}">${c.price > 0 ? 'Payant' : 'Gratuit'}</span>
-          <span class="badge ${c.track === 'diplome' ? 'badge-diplome' : 'badge-certificat'}">${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}</span>
+          <span class="badge badge-${c.track || 'certificat'}">${({ badge: 'Badge', diplome: 'Diplôme' })[c.track] || 'Certificat'}</span>
           <span class="badge badge-lang">${languageLabel(c.language)}</span>
         </div>
         <h3>${escapeHtml(c.title)}</h3>
@@ -862,7 +865,7 @@ if (params.get('filtre') === 'gratuit'){
   document.querySelectorAll('#filtersRow .filter-chip').forEach(c => c.classList.remove('active'));
   document.querySelector('[data-filter="free"]').classList.add('active');
 }
-if (params.get('type') === 'certificat' || params.get('type') === 'diplome'){
+if (['badge', 'certificat', 'diplome'].includes(params.get('type'))){
   currentFilter = params.get('type');
   document.querySelectorAll('#filtersRow .filter-chip').forEach(c => c.classList.remove('active'));
   document.querySelector(`[data-filter="${currentFilter}"]`).classList.add('active');

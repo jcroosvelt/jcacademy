@@ -81,7 +81,7 @@ const root = document.getElementById('root');
   const nLessons = (lessons || []).length;
   let html = `<div class="hero">${c.thumbnail_url ? `<img src="${esc(c.thumbnail_url)}" alt="">` : ''}<div class="in">
     <h1>${esc(c.title)}</h1><div class="muted">${esc(c.short_description || '')}</div>
-    <div class="meta"><span class="chip gold">${price}</span><span class="chip">${c.track === 'diplome' ? 'Programme Diplôme' : 'Programme Certificat'}</span>${c.category ? `<span class="chip">${esc(c.category)}</span>` : ''}<span class="chip">${c.language === 'ht' ? 'Créole' : c.language === 'en' ? 'Anglais' : 'Français'}</span><span class="chip">${(mods || []).length} module(s) · ${nLessons} leçon(s)</span>${start ? `<span class="chip">${esc(start)}</span>` : ''}</div></div></div>`;
+    <div class="meta"><span class="chip gold">${price}</span><span class="chip">Programme ${({ badge: 'Badge', diplome: 'Diplôme' })[c.track] || 'Certificat'}</span>${c.category ? `<span class="chip">${esc(c.category)}</span>` : ''}<span class="chip">${c.language === 'ht' ? 'Créole' : c.language === 'en' ? 'Anglais' : 'Français'}</span><span class="chip">${(mods || []).length} module(s) · ${nLessons} leçon(s)</span>${start ? `<span class="chip">${esc(start)}</span>` : ''}</div></div></div>`;
   if (c.description) html += `<div class="card"><h2>Présentation du cours</h2><div class="rich-content">${window.JCRich.render(c.description)}</div></div>`;
   if (c.prerequisites) html += `<div class="card"><h2>Prérequis</h2><p style="margin:0;">${esc(c.prerequisites)}</p></div>`;
   if (!(mods || []).length) html += '<div class="card"><div class="empty">Ce cours ne contient encore aucun module.</div></div>';

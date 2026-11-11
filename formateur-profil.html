@@ -345,6 +345,7 @@ img{max-width:100%;display:block;}
 .badge-free{background:#E4F7EE;color:var(--success);}
 .badge-soon{background:var(--navy);color:#fff;}
 .badge-paid{background:#FDF0DA;color:#B57200;}
+.badge-badge{background:#E4F7EE;color:#1D7A55;}
 .badge-diplome{background:var(--navy-soft);color:var(--navy);}
 .badge-certificat{background:#FBEAD2;color:#8A5A00;}
 .course-body h3{font-size:16.5px;margin:0;line-height:1.3;}
@@ -742,7 +743,7 @@ document.getElementById('shareTeacherBtn').dataset.shareId = teacherId;
           <div class="course-tags">
             ${soonBadge(c)}
             <span class="badge ${c.price > 0 ? 'badge-paid' : 'badge-free'}">${c.price > 0 ? 'Payant' : 'Gratuit'}</span>
-            <span class="badge ${c.track === 'diplome' ? 'badge-diplome' : 'badge-certificat'}">${c.track === 'diplome' ? 'Diplôme' : 'Certificat'}</span>
+            <span class="badge badge-${c.track || 'certificat'}">${({ badge: 'Badge', diplome: 'Diplôme' })[c.track] || 'Certificat'}</span>
           </div>
           <h3>${escapeHtml(c.title)}</h3>
           <div class="course-foot"><span class="price ${c.price === 0 ? 'free' : ''}">${c.price > 0 ? c.price + ' HTG' : 'Gratuit'}</span></div>

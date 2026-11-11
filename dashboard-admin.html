@@ -878,6 +878,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
     <a href="#" data-tab="payouts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Versements</span></a>
     <div class="adm-nav-label">Gestion</div>
     <a href="#" data-tab="courses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/></svg><span>Cours à valider</span><span class="adm-badge" id="badgeCourses"></span></a>
+    <a href="dashboard-formateur.html?new=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>Créer un cours</span></a>
     <a href="#" data-tab="teachers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg><span>Candidatures formateurs</span><span class="adm-badge" id="badgeTeachers"></span></a>
     <a href="#" data-tab="certificates"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 12.9 17 22l-5-3-5 3 1.5-9.1"/></svg><span>Certificats</span><span class="adm-badge" id="badgeCerts"></span></a>
     <a href="#" data-tab="users"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Utilisateurs</span></a>
@@ -2360,6 +2361,7 @@ async function loadCourses(){
       <div class="review-actions">
         <button class="btn-approve" data-action="approve-course" data-id="${c.id}" data-email="${c.profiles?.email || ''}" data-name="${escapeHtml(c.profiles?.full_name || '')}" data-title="${escapeHtml(c.title)}">Approuver</button>
         <button class="btn-reject" data-action="reject-course" data-id="${c.id}" data-email="${c.profiles?.email || ''}" data-name="${escapeHtml(c.profiles?.full_name || '')}" data-title="${escapeHtml(c.title)}">Rejeter</button>
+        <a class="btn btn-outline btn-sm" href="dashboard-formateur.html?course=${c.id}">Voir et modifier</a>
       </div>
     </div>
   `).join('');

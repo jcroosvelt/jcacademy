@@ -1021,19 +1021,35 @@ function slugify(s){ return (s||'').toLowerCase().trim().normalize('NFD').replac
 
 let currentUser = null;
 let currentCourseId = null;
+let isAdmin = false;
 
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session){ window.location.href = 'login.html'; return; }
   const { data: profile, error } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
-  if (error || !profile || profile.role !== 'formateur'){
+  if (error || !profile || !['formateur', 'admin'].includes(profile.role)){
     window.location.href = 'index.html';
     return;
   }
   currentUser = profile;
+  isAdmin = profile.role === 'admin';
   document.getElementById('userName').textContent = profile.full_name;
   renderAvatar(document.getElementById('userAvatar'), profile);
+  if (isAdmin){
+    /* L'administrateur crée ses cours comme un formateur, mais ils sont publiés directement */
+    document.querySelector('.dash-user span').textContent = 'Administrateur';
+    const back = document.createElement('a');
+    back.href = 'dashboard-admin.html'; back.textContent = "Retour à l'administration";
+    document.querySelector('.dash-nav').insertBefore(back, document.querySelector('.dash-nav a[href="mon-profil.html"]'));
+    document.getElementById('submitReviewBtn').textContent = 'Publier le cours';
+  }
   loadOverview();
+  /* Liens directs depuis l'administration : ?new=1 (nouveau cours) ou ?course=ID (modifier un cours) */
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('new') === '1' || qs.get('course')){
+    document.querySelector('.dash-nav a[data-tab="courses"]').click();
+    openCourseEditor(qs.get('course') || null);
+  }
 })();
 
 document.getElementById('logoutLink').addEventListener('click', (e) => { e.preventDefault(); doLogout(); });
@@ -1285,9 +1301,10 @@ async function saveCourse(targetStatus){
     price: Number(document.getElementById('cPrice').value) || 0,
     language: document.getElementById('cLanguage').value,
     track: document.querySelector('input[name="cTrack"]:checked').value,
-    final_assessment_type: document.querySelector('input[name="cFinal"]:checked').value,
-    teacher_id: currentUser.id
+    final_assessment_type: document.querySelector('input[name="cFinal"]:checked').value
   };
+  /* Le cours d'un administrateur est publié directement, sans validation */
+  if (targetStatus === 'en_attente' && isAdmin) targetStatus = 'publie';
   if (targetStatus) payload.status = targetStatus;
 
   if (pendingThumbFile){
@@ -1304,13 +1321,14 @@ async function saveCourse(targetStatus){
     result = await supabase.from('courses').update(payload).eq('id', currentCourseId).select().single();
   } else {
     payload.slug = slugify(title) + '-' + Math.random().toString(36).slice(2,7);
+    payload.teacher_id = currentUser.id;
     result = await supabase.from('courses').insert(payload).select().single();
   }
 
   if (result.error){ showCourseMsg('Erreur : ' + result.error.message, true); return; }
 
   currentCourseId = result.data.id;
-  showCourseMsg(targetStatus === 'en_attente' ? 'Cours soumis pour validation.' : 'Brouillon enregistré.', false);
+  showCourseMsg(targetStatus === 'publie' ? 'Cours publié.' : targetStatus === 'en_attente' ? 'Cours soumis pour validation.' : 'Brouillon enregistré.', false);
   document.getElementById('modulesSection').classList.remove('hidden');
   loadModules(currentCourseId);
   loaded.courses = false;

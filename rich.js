@@ -7,7 +7,9 @@
 // Le conteneur qui reçoit le HTML doit porter la classe "rich-content".
 (function () {
   const ALLOWED = ['P','BR','B','I','U','S','STRIKE','STRONG','EM','SUB','SUP','SPAN','DIV',
-    'H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE','UL','OL','LI','A','IMG','FIGURE','FIGCAPTION','HR','IFRAME'];
+    'H1','H2','H3','H4','BLOCKQUOTE','PRE','CODE','UL','OL','LI','A','IMG','FIGURE','FIGCAPTION','HR','IFRAME',
+    'TABLE','THEAD','TBODY','TFOOT','TR','TD','TH'];
+  const STYLE_TAGS = ['SPAN','STRONG','EM','U','S','SUB','SUP','P','H1','H2','H3','H4','LI','BLOCKQUOTE','TD','TH'];
   const DROP = ['SCRIPT','STYLE','OBJECT','EMBED','NOSCRIPT','TEMPLATE','SVG','MATH','FORM','INPUT',
     'BUTTON','TEXTAREA','SELECT','LINK','META','BASE','FRAME','FRAMESET','AUDIO','VIDEO','SOURCE'];
   const CLASS_OK = /^ql-(align-(center|right|justify)|indent-[1-8]|direction-rtl|video)$/;
@@ -50,6 +52,9 @@
       const prop = decl.slice(0, i).trim().toLowerCase();
       const val = decl.slice(i + 1).trim();
       if ((prop === 'color' || prop === 'background-color') && COLOR_OK.test(val)) out.push(prop + ':' + val);
+      else if (prop === 'font-family' && /^[A-Za-z0-9 ,'"-]{2,90}$/.test(val)) out.push(prop + ':' + val);
+      else if (prop === 'font-size' && /^\d{1,2}(\.\d)?px$/.test(val) && parseFloat(val) >= 8 && parseFloat(val) <= 96) out.push(prop + ':' + val);
+      else if (prop === 'line-height' && /^\d(\.\d{1,2})?$/.test(val) && parseFloat(val) >= 0.8 && parseFloat(val) <= 4) out.push(prop + ':' + val);
     });
     return out.join(';');
   }
@@ -70,6 +75,7 @@
         const href = child.getAttribute('href');
         const src = child.getAttribute('src');
         const alt = child.getAttribute('alt');
+        const dchecked = child.getAttribute('data-checked');
         const cls = (child.getAttribute('class') || '').split(/\s+/).filter(c => CLASS_OK.test(c));
         const style = safeStyle(child.getAttribute('style'));
         [...child.attributes].forEach(a => child.removeAttribute(a.name));
@@ -91,7 +97,8 @@
         }
         if (cls.length && tag !== 'A' && tag !== 'IMG') child.setAttribute('class', cls.filter(c => c !== 'ql-video').join(' '));
         if (!child.getAttribute('class')) child.removeAttribute('class');
-        if (style && (tag === 'SPAN' || tag === 'STRONG' || tag === 'EM' || tag === 'U' || tag === 'S')) child.setAttribute('style', style);
+        if (style && STYLE_TAGS.includes(tag)) child.setAttribute('style', style);
+        if (tag === 'UL' && (dchecked === 'true' || dchecked === 'false')) child.setAttribute('data-checked', dchecked);
         if (tag === 'A') {
           const ok = safeUrl(href, true);
           if (ok) { child.setAttribute('href', ok); child.setAttribute('target', '_blank'); child.setAttribute('rel', 'noopener noreferrer'); }
@@ -144,6 +151,14 @@
       '.rich-content .ql-align-center img{margin-left:auto;margin-right:auto;}.rich-content .ql-align-right img{margin-left:auto;}',
       '.rich-content .ql-indent-1{margin-left:2em;}.rich-content .ql-indent-2{margin-left:4em;}.rich-content .ql-indent-3{margin-left:6em;}.rich-content .ql-indent-4{margin-left:8em;}',
       '.rich-content .ql-indent-5{margin-left:10em;}.rich-content .ql-indent-6{margin-left:12em;}.rich-content .ql-indent-7{margin-left:14em;}.rich-content .ql-indent-8{margin-left:16em;}',
+      '.rich-content table{border-collapse:collapse;width:100%;margin:1.2em 0;font-size:.95em;display:block;overflow-x:auto;}',
+      '.rich-content td,.rich-content th{border:1px solid var(--border,#CBD5E8);padding:8px 12px;vertical-align:top;min-width:70px;}',
+      '.rich-content th{background:var(--surface,#F7F9FC);font-weight:700;color:var(--navy-dark,#071D52);}',
+      '.rich-content ul[data-checked]{list-style:none;padding-left:.2em;}',
+      '.rich-content ul[data-checked] li{position:relative;padding-left:1.9em;}',
+      '.rich-content ul[data-checked] li::before{content:"";position:absolute;left:0;top:.38em;width:1.05em;height:1.05em;border:2px solid var(--navy,#0C2C74);border-radius:4px;box-sizing:border-box;}',
+      '.rich-content ul[data-checked="true"] li::before{background:var(--gold,#F5A800);border-color:var(--gold,#F5A800);}',
+      '.rich-content ul[data-checked="true"] li::after{content:"";position:absolute;left:.36em;top:.5em;width:.3em;height:.55em;border:solid var(--navy-dark,#071D52);border-width:0 2px 2px 0;transform:rotate(45deg);}',
       '.rich-content .rich-video{position:relative;width:100%;aspect-ratio:16/9;margin:16px 0;border-radius:12px;overflow:hidden;background:#000;}',
       '.rich-content .rich-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}'
     ].join('\n');

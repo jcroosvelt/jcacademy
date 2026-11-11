@@ -850,6 +850,22 @@ footer a:hover{color:var(--gold);}
           <p id="shopMsg" style="display:none;font-size:13.5px;"></p>
           <div class="review-actions"><button type="button" class="btn btn-primary" id="saveShopBtn">Enregistrer la boutique</button></div>
         </div>
+
+        <div class="editor-card hidden" id="shopDomainCard" style="margin-top:16px;">
+          <h4 style="margin-top:0;">Adresse de votre boutique</h4>
+          <p class="small-muted" style="margin:0 0 6px;">Adresse automatique :</p>
+          <p style="margin:0 0 16px;"><a id="shSubLink" href="#" target="_blank" rel="noopener" style="font-weight:600;word-break:break-all;"></a></p>
+          <h4>Votre propre nom de domaine (facultatif)</h4>
+          <p class="small-muted" style="margin:0 0 10px;">Vous avez acheté un domaine (.com, .store, .ht...) ? Saisissez-le ici, par exemple <b>maboutique.com</b>, puis ajoutez chez votre registraire les enregistrements DNS indiqués.</p>
+          <div class="form-group"><input type="text" id="shDomainInput" maxlength="120" placeholder="maboutique.com" autocapitalize="off" autocomplete="off"></div>
+          <div id="shDomainStatus" class="small-muted" style="margin:8px 0;display:none;"></div>
+          <div id="shDomainDns" class="hidden" style="margin:8px 0;overflow-x:auto;"></div>
+          <div class="review-actions">
+            <button type="button" class="btn-mini hidden" id="shDomainRemoveBtn">Retirer le domaine</button>
+            <button type="button" class="btn-mini hidden" id="shDomainCheckBtn">Vérifier la configuration</button>
+            <button type="button" class="btn btn-primary" id="shDomainSaveBtn">Associer ce domaine</button>
+          </div>
+        </div>
       </section>
 
       <section id="tab-products" class="tab-panel hidden">
@@ -1791,6 +1807,62 @@ async function ensureShop(){
   document.querySelector('.dash-nav a[data-tab="shop"]').click();
   return false;
 }
+const SHOP_ROOT = 'jcacademy.online';
+function shopPublicUrl(sh){
+  if (sh.custom_domain && sh.custom_domain_status === 'verifie') return 'https://' + sh.custom_domain;
+  if (sh.subdomain) return 'https://' + sh.subdomain + '.' + SHOP_ROOT;
+  return 'boutique.html?slug=' + encodeURIComponent(sh.slug);
+}
+function renderShopDomain(){
+  const card = document.getElementById('shopDomainCard');
+  card.classList.toggle('hidden', !myShop);
+  if (!myShop) return;
+  const sub = myShop.subdomain ? 'https://' + myShop.subdomain + '.' + SHOP_ROOT : '';
+  const a = document.getElementById('shSubLink'); a.href = sub || '#'; a.textContent = sub ? sub.replace('https://', '') : 'En cours de création...';
+  const has = !!myShop.custom_domain;
+  document.getElementById('shDomainInput').value = myShop.custom_domain || '';
+  document.getElementById('shDomainInput').disabled = has;
+  document.getElementById('shDomainSaveBtn').classList.toggle('hidden', has);
+  document.getElementById('shDomainRemoveBtn').classList.toggle('hidden', !has);
+  document.getElementById('shDomainCheckBtn').classList.toggle('hidden', !has || myShop.custom_domain_status === 'verifie');
+  const st = document.getElementById('shDomainStatus');
+  st.style.display = has ? 'block' : 'none';
+  st.innerHTML = has ? (myShop.custom_domain_status === 'verifie' ? '<b style="color:#1D9A6C;">Domaine actif.</b> Votre boutique est disponible sur https://' + escapeHtml(myShop.custom_domain) : '<b style="color:#B57200;">En attente de configuration DNS.</b> Ajoutez les enregistrements ci-dessous, puis cliquez sur « Vérifier la configuration » (la propagation peut prendre de quelques minutes à 24 h).') : '';
+  if (!has) document.getElementById('shDomainDns').classList.add('hidden');
+}
+async function callShopDomain(action, domain){
+  const { data, error } = await supabase.functions.invoke('shop-domain', { body: { action, domain } });
+  if (error){ let m = error.message; try { const j = await error.context.json(); if (j?.error) m = j.error; } catch (e) {} throw new Error(m); }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+function showDomainDns(records){
+  const box = document.getElementById('shDomainDns');
+  if (!records || !records.length){ box.classList.add('hidden'); return; }
+  box.innerHTML = '<table class="data-table"><thead><tr><th>Type</th><th>Nom / Hôte</th><th>Valeur</th></tr></thead><tbody>' + records.map(r => `<tr><td>${escapeHtml(r.type)}</td><td>${escapeHtml(r.name)}</td><td style="word-break:break-all;">${escapeHtml(r.value)}</td></tr>`).join('') + '</tbody></table>';
+  box.classList.remove('hidden');
+}
+async function runDomainAction(btn, action, domain){
+  btn.disabled = true;
+  try {
+    const r = await callShopDomain(action, domain);
+    await fetchMyShop(); renderShopDomain(); showDomainDns(r.dns);
+    showShopMsg(r.message || 'Mis à jour.', false);
+  } catch (e){ showShopMsg(e.message, true); }
+  btn.disabled = false;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('shDomainSaveBtn').addEventListener('click', (e) => {
+    const d = document.getElementById('shDomainInput').value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+    if (!/^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/.test(d)){ showShopMsg('Domaine invalide. Exemple : maboutique.com', true); return; }
+    runDomainAction(e.currentTarget, 'add', d);
+  });
+  document.getElementById('shDomainCheckBtn').addEventListener('click', (e) => runDomainAction(e.currentTarget, 'check', myShop.custom_domain));
+  document.getElementById('shDomainRemoveBtn').addEventListener('click', async (e) => {
+    if (!(await showConfirm('Retirer le domaine ' + myShop.custom_domain + ' de votre boutique ?'))) return;
+    runDomainAction(e.currentTarget, 'remove', myShop.custom_domain);
+  });
+});
 function showShopMsg(text, isError){ const el = document.getElementById('shopMsg'); el.textContent = text; el.style.color = isError ? '#C0392B' : '#1D9A6C'; el.style.display = 'block'; }
 async function loadShopTab(){
   await fetchMyShop();
@@ -1799,7 +1871,8 @@ async function loadShopTab(){
   document.getElementById('shDesc').value = myShop?.description || '';
   [['shLogoPreview', myShop?.logo_url], ['shCoverPreview', myShop?.cover_url]].forEach(([id, url]) => { const im = document.getElementById(id); im.classList.toggle('show', !!url); if (url) im.src = url; });
   const link = document.getElementById('viewShopLink');
-  link.classList.toggle('hidden', !myShop); if (myShop) link.href = 'boutique.html?slug=' + encodeURIComponent(myShop.slug);
+  link.classList.toggle('hidden', !myShop); if (myShop) link.href = shopPublicUrl(myShop);
+  renderShopDomain();
   document.getElementById('saveShopBtn').textContent = myShop ? 'Enregistrer la boutique' : 'Créer ma boutique';
   if (myShop && myShop.status === 'suspendu') showShopMsg("Votre boutique est suspendue : elle n'est plus visible du public. Contactez l'administration.", true);
   else document.getElementById('shopMsg').style.display = 'none';

@@ -815,8 +815,10 @@ async function loadDirectory(){
 }
 
 let allProducts = [], cat = 'Tous';
-async function loadShop(slug){
-  const { data, error } = await supabase.from('shops').select('*, profiles(full_name)').eq('slug', slug).eq('status', 'actif').maybeSingle();
+async function loadShop(key){
+  let q = supabase.from('shops').select('*, profiles(full_name)').eq('status', 'actif');
+  q = key.sub ? q.eq('subdomain', key.sub) : key.domain ? q.eq('custom_domain', key.domain) : q.eq('slug', key.slug);
+  const { data, error } = await q.maybeSingle();
   document.getElementById('directoryView').classList.add('hidden');
   if (error || !data){
     document.getElementById('pageTitle').textContent = 'Boutique introuvable';
@@ -867,8 +869,24 @@ document.getElementById('searchBtn').addEventListener('click', () => { currentSe
 document.getElementById('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter'){ e.preventDefault(); document.getElementById('searchBtn').click(); } });
 document.getElementById('sortSel').addEventListener('change', renderProducts);
 
-const slugParam = new URLSearchParams(location.search).get('slug');
-if (slugParam) loadShop(slugParam); else loadDirectory();
+/* Sous-domaine (nom.jcacademy.online) ou domaine personnalisé : la boutique est servie à la racine du domaine. */
+const MAIN_SITE = 'https://jcacademy.online/';
+const qs = new URLSearchParams(location.search);
+const onShopHost = !!(qs.get('sub') || qs.get('domain'));
+if (onShopHost){
+  /* Les liens vers le reste du site (produits, connexion, panier) pointent vers le site principal, où se fait l'achat. */
+  const absolutize = () => document.querySelectorAll('a[href]').forEach(a => {
+    const h = a.getAttribute('href');
+    if (h && !/^(https?:|mailto:|tel:|#|javascript:)/i.test(h)) a.setAttribute('href', MAIN_SITE + h.replace(/^\//, ''));
+  });
+  new MutationObserver(absolutize).observe(document.body, { childList: true, subtree: true });
+  absolutize();
+}
+const slugParam = qs.get('slug');
+if (qs.get('sub')) loadShop({ sub: qs.get('sub').toLowerCase() });
+else if (qs.get('domain')) loadShop({ domain: qs.get('domain').toLowerCase().replace(/^www\./, '') });
+else if (slugParam) loadShop({ slug: slugParam });
+else loadDirectory();
 </script>
 
 <script src="modal.js"></script>

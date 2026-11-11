@@ -1,6 +1,30 @@
 {
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?<sub>(?!www$)[a-z0-9-]+)\\.jcacademy\\.online"
+        }
+      ],
+      "destination": "/boutique.html?sub=:sub"
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!(www\\.)?jcacademy\\.online$)(?!.*\\.vercel\\.app$)(?!localhost)(?<domain>.+)"
+        }
+      ],
+      "destination": "/boutique.html?domain=:domain"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/sitemap"
+    },
+    {
       "source": "/c/:slug",
       "destination": "https://tzgwhhxxozujxnjjpucg.supabase.co/functions/v1/share?type=course&slug=:slug"
     },

@@ -1266,6 +1266,54 @@ async function checkCourseCompletion(){
   }
 }
 
+/* ---- Badges (visuel généré, attribution automatique) ---- */
+function badgeWrap(text, max, lines){
+  const words = String(text || '').split(/\s+/), out = []; let cur = '';
+  words.forEach(w => { if ((cur + ' ' + w).trim().length > max){ if (cur) out.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+  if (cur) out.push(cur);
+  if (out.length > lines){ out.length = lines; out[lines - 1] = out[lines - 1].replace(/.{0,2}$/, '') + '…'; }
+  return out;
+}
+function badgeSvg(cert){
+  const esc = escapeHtml;
+  const title = badgeWrap(cert.courses?.title, 18, 3);
+  const startY = 300 - (title.length - 1) * 22;
+  const date = cert.issued_at ? new Date(cert.issued_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const name = badgeWrap(currentUser?.full_name || '', 26, 1)[0] || '';
+  const id = String(cert.id || '').slice(0, 8).toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 560" width="500" height="560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1647B8"/><stop offset="1" stop-color="#071D52"/></linearGradient>
+    <linearGradient id="goldG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD166"/><stop offset="1" stop-color="#F5A800"/></linearGradient>
+  </defs>
+  <polygon points="250,20 460,135 460,385 250,500 40,385 40,135" fill="url(#goldG)"/>
+  <polygon points="250,40 442,146 442,374 250,480 58,374 58,146" fill="url(#bgG)"/>
+  <polygon points="250,58 426,155 426,365 250,462 74,365 74,155" fill="none" stroke="#FFD166" stroke-width="2" opacity=".6"/>
+  <text x="250" y="112" text-anchor="middle" fill="#FFD166" font-size="15" font-weight="700" letter-spacing="6">BADGE</text>
+  <circle cx="250" cy="165" r="26" fill="url(#goldG)"/>
+  <path d="M237 166 l9 9 l17 -19" fill="none" stroke="#071D52" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  ${title.map((t, i) => `<text x="250" y="${startY + i * 44}" text-anchor="middle" fill="#fff" font-size="32" font-weight="700">${esc(t)}</text>`).join('')}
+  <line x1="170" y1="380" x2="330" y2="380" stroke="#FFD166" stroke-width="2" opacity=".7"/>
+  <text x="250" y="408" text-anchor="middle" fill="#fff" font-size="18" font-weight="600">${esc(name)}</text>
+  <text x="250" y="432" text-anchor="middle" fill="#C9D6F2" font-size="13">Obtenu le ${esc(date)}</text>
+  <text x="250" y="540" text-anchor="middle" fill="#5B6B85" font-size="12">JC Academy · N° ${esc(id)}</text>
+</svg>`;
+}
+function downloadBadgePng(cert){
+  const svg = badgeSvg(cert);
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = 1000; c.height = 1120;
+    c.getContext('2d').drawImage(img, 0, 0, 1000, 1120);
+    c.toBlob(b => {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = 'badge-' + (cert.courses?.title || 'jc-academy').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.png';
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    }, 'image/png');
+  };
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
 /* ---- Certificats ---- */
 async function loadCertificates(){
   const wrap = document.getElementById('certificatesList');
@@ -1278,6 +1326,14 @@ async function loadCertificates(){
   const reviewedCourseIds = new Set((myReviews||[]).map(r => r.course_id));
   const certifiedCourseIds = new Set((certs||[]).map(c => c.course_id));
   const eligibleWithoutCert = (completed||[]).filter(e => !certifiedCourseIds.has(e.course_id));
+  /* Un badge s'obtient automatiquement à la fin du cours : aucune demande à faire. */
+  const autoBadges = eligibleWithoutCert.filter(e => e.courses?.track === 'badge');
+  if (autoBadges.length && !loadCertificates._retry){
+    loadCertificates._retry = true;
+    await Promise.all(autoBadges.map(e => supabase.from('certificates').insert({ user_id: currentUser.id, course_id: e.course_id, status: 'livre', issued_at: new Date().toISOString() })));
+    const r = await loadCertificates(); loadCertificates._retry = false; return r;
+  }
+  loadCertificates._retry = false;
   const eligibleForReview = (completed||[]).filter(e => !reviewedCourseIds.has(e.course_id));
 
   const statusLabel = { demande: 'Demandé', en_traitement: 'En traitement', livre: 'Livré' };
@@ -1291,8 +1347,17 @@ async function loadCertificates(){
       </div>
     `).join('');
   }
-  if (certs && certs.length){
-    html += certs.map(c => `
+  const badgeCerts = (certs || []).filter(c => c.courses?.track === 'badge' && c.status === 'livre');
+  if (badgeCerts.length){
+    html += '<h3 style="margin:8px 0 12px;">Mes badges</h3><div style="display:flex;flex-wrap:wrap;gap:18px;margin-bottom:26px;">' + badgeCerts.map(c => `
+      <div style="width:220px;text-align:center;">
+        <div style="width:220px;">${badgeSvg(c).replace('width="500" height="560"', 'width="220" height="247"')}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:8px;" data-action="dl-badge" data-cert="${c.id}">Télécharger (PNG)</button>
+      </div>`).join('') + '</div>';
+  }
+  const otherCerts = (certs || []).filter(c => !badgeCerts.includes(c));
+  if (otherCerts.length){
+    html += otherCerts.map(c => `
       <div class="course-row">
         <div><h4>${escapeHtml(c.courses?.title || '')}</h4><div class="meta">${statusLabel[c.status]} ${c.requested_at ? '· ' + formatDate(c.requested_at) : ''}</div></div>
         ${c.certificate_url ? `<a href="${c.certificate_url}" target="_blank" class="btn btn-outline btn-sm">Télécharger</a>` : ''}
@@ -1319,6 +1384,10 @@ async function loadCertificates(){
   }
 
   wrap.innerHTML = html || '<p class="empty-state">Aucun certificat pour le moment. Terminez un cours pour en demander un.</p>';
+
+  wrap.querySelectorAll('[data-action="dl-badge"]').forEach(btn => btn.addEventListener('click', () => {
+    const c = badgeCerts.find(x => x.id === btn.dataset.cert); if (c) downloadBadgePng(c);
+  }));
 
   wrap.querySelectorAll('[data-action="toggle-review"]').forEach(btn => btn.addEventListener('click', () => {
     document.getElementById('review-form-' + btn.dataset.course).classList.toggle('hidden');

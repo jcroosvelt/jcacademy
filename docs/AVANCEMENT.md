@@ -3,7 +3,7 @@
 Fichier de suivi, mis à jour après chaque modification (consigne de Joseph).
 Il n'est pas publié sur le site (dossier `docs/` exclu du déploiement Vercel).
 
-Dernière mise à jour : 11 novembre 2026, après l'ajout du type de parcours Badge.
+Dernière mise à jour : 11 novembre 2026, après les sous-domaines de boutique, le badge automatique et le sitemap.
 
 ## Fait et en ligne
 
@@ -28,7 +28,20 @@ Dernière mise à jour : 11 novembre 2026, après l'ajout du type de parcours Ba
 - **Boutiques des formateurs** : création dans « Ma boutique », page publique `boutique.html` (bannière, logo, statistiques, catégories, tri, cartes produit). L'admin peut suspendre une boutique.
 - **Annuaire des boutiques** (`boutique.html` sans paramètre) et lien depuis les produits.
 
+### Sous-domaines et domaines de boutique
+- **Sous-domaine automatique** : chaque boutique reçoit `nom.jcacademy.online` à sa création (colonne `shops.subdomain`, générée par la base). Routage dans `vercel.json` (hôte -> `boutique.html?sub=`).
+- **Domaine personnalisé** (.com, .store, .ht...) : saisi dans « Ma boutique », ajouté à Vercel par la fonction `shop-domain`, avec les enregistrements DNS affichés et un bouton de vérification.
+- Les liens vers les produits et l'achat pointent vers le site principal (la session de connexion n'est pas partagée entre domaines).
+
+### Badge
+- **Visuel généré** (SVG hexagonal, nom de l'étudiant, date, numéro) téléchargeable en PNG dans l'espace étudiant.
+- **Attribution automatique** à la fin du cours (déclencheur en base sur `enrollments.progress >= 100`).
+
+### Référencement
+- Meta description sur `login.html`. Sitemap servi sur `https://jcacademy.online/sitemap.xml` (boutiques incluses).
+
 ### Paiements et revenus
+- **Versements** : bouton « Marquer payé » (enregistre le solde en un clic). **Frais de candidature** comptés dans le revenu JC Academy.
 - **Revenus formateur** et suivi des versements.
 - **Frais de candidature formateur** payables par MonCash (réglage admin, 0 pour l'instant).
 
@@ -44,20 +57,20 @@ Dernière mise à jour : 11 novembre 2026, après l'ajout du type de parcours Ba
 
 ## En cours / à faire
 - **Boutique « façon Charriow »** : le site de référence est inaccessible depuis l'environnement de travail. En attente de captures d'écran d'une boutique Charriow (vitrine et fiche produit) pour copier le style exact.
-- **Badge** : pas encore de visuel de badge ni d'attribution automatique à la fin du cours (aujourd'hui, demande puis livraison comme un certificat).
+- **Domaines personnalisés** : à activer en ajoutant les secrets `VERCEL_TOKEN`, `VERCEL_PROJECT_ID` (et `VERCEL_TEAM_ID`) à la fonction `shop-domain`, et le wildcard `*.jcacademy.online` dans Vercel.
+- **API de paiement unique** (MonCash, NatCash, carte) : à brancher par Joseph.
 - **Vérifier en conditions réelles** : circuit complet formateur (boutique, produit, validation admin) avec de vrais comptes.
 - **Recharger Bunny** puis tester l'envoi de vidéos.
 - **Test d'un paiement MonCash réel** (frais de candidature, achats).
 
 ## Problèmes connus
 - Le lien « Voir le CV » d'une candidature formateur ne s'ouvre pas (fichier dans un espace privé).
-- Les frais de candidature ne sont pas comptés dans les revenus de l'admin.
-- Pas de bouton « marquer comme payé » pour un versement.
 - La page d'accueil : le titre « Trois parcours » peut être remplacé par le texte édité dans l'admin.
 
 ## Journal des modifications
 | Date | Modification |
 |---|---|
+| 11 nov. 2026 | Sous-domaines et domaines de boutique, badge automatique, sitemap, marquer payé, frais de candidature dans le revenu |
 | 11 nov. 2026 | Type de parcours Badge / Certificat / Diplôme |
 | 11 nov. 2026 | Vitrine de boutique, validation des produits, aperçu des cours, boutiques des formateurs |
 | 11 nov. 2026 | Éditeur de texte complet ; l'admin crée des cours |

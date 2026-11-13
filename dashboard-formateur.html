@@ -580,6 +580,16 @@ footer a:hover{color:var(--gold);}
 </style>
 <style>
 .tab-panel{margin-bottom:10px;}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.panel-head h3{margin:0;}
+.panel-lead{font-size:13.5px;color:var(--text-muted);line-height:1.5;margin:-6px 0 18px;}
+.section-title{font-size:16px;margin:28px 0 12px;}
+.section-title:first-child{margin-top:0;}
+.tab-panel > h3:first-child{margin-top:0;margin-bottom:16px;}
+.panel-head h3{margin:0 !important;}
+.editor-card .section-title:not(:first-child){margin-top:24px;}
+.editor-card > h4:first-child{margin-top:0;}
+
 .course-row{border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
 .course-row h4{margin:0 0 4px;font-size:15px;}
 .course-row .meta{font-size:12.5px;color:var(--text-muted);}
@@ -588,11 +598,12 @@ footer a:hover{color:var(--gold);}
 .editor-card h3{margin-top:0;}
 .form-group{margin-bottom:16px;}
 .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text);}
-.form-group input[type="text"],.form-group input[type="number"],.form-group input[type="url"],
+.form-group input[type="text"],.form-group input[type="number"],.form-group input[type="url"],.form-group input[type="email"],.form-group input[type="tel"],.form-group input[type="date"],.form-group input[type="time"],.form-group input[type="datetime-local"],.form-group input[type="password"],
 .form-group textarea,.form-group select{
-  width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;
+  width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text);box-sizing:border-box;
 }
-.form-group textarea{min-height:100px;resize:vertical;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(12,44,116,.08);}
+.form-group textarea{min-height:90px;resize:vertical;}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media (max-width:600px){.form-row{grid-template-columns:1fr;}}
 .radio-row{display:flex;gap:18px;flex-wrap:wrap;}
@@ -691,8 +702,8 @@ footer a:hover{color:var(--gold);}
       </section>
 
       <section id="tab-revenue" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-          <h3 style="margin:0;">Mes revenus</h3>
+        <div class="panel-head">
+          <h3>Mes revenus</h3>
           <select id="revPeriod" class="rev-select" aria-label="Période">
             <option value="all">Toute la période</option>
             <option value="month">Ce mois-ci</option>
@@ -700,21 +711,21 @@ footer a:hover{color:var(--gold);}
             <option value="year">Cette année</option>
           </select>
         </div>
-        <p class="small-muted" style="margin:0 0 18px;">Votre part : 70 % des ventes de cours et 80 % des ventes de produits numériques. Seules les commandes payées sont comptées.</p>
+        <p class="panel-lead">Votre part : 70 % des ventes de cours et 80 % des ventes de produits numériques. Seules les commandes payées sont comptées.</p>
         <div class="dash-stats" id="revCards">
           <div class="dash-stat-card"><b>—</b><span>Ventes brutes</span></div>
           <div class="dash-stat-card"><b>—</b><span>Ma part</span></div>
           <div class="dash-stat-card"><b>—</b><span>Déjà versé (total)</span></div>
           <div class="dash-stat-card"><b>—</b><span>Reste à verser (total)</span></div>
         </div>
-        <h4 style="margin:6px 0 10px;">Détail des ventes</h4>
+        <h4 class="section-title">Détail des ventes</h4>
         <div class="table-scroll" style="margin-bottom:28px;">
           <table class="data-table">
             <thead><tr><th>Cours / produit</th><th>Type</th><th>Ventes payées</th><th>Brut</th><th>Ma part</th></tr></thead>
             <tbody id="revItemsBody"><tr><td colspan="5">Chargement...</td></tr></tbody>
           </table>
         </div>
-        <h4 style="margin:6px 0 10px;">Versements reçus</h4>
+        <h4 class="section-title">Versements reçus</h4>
         <div class="table-scroll">
           <table class="data-table">
             <thead><tr><th>Date</th><th>Montant</th><th>Moyen</th><th>Référence</th></tr></thead>
@@ -725,8 +736,8 @@ footer a:hover{color:var(--gold);}
 
       <section id="tab-courses" class="tab-panel hidden">
         <div id="coursesListView">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-            <h3 style="margin:0;">Mes cours</h3>
+          <div class="panel-head">
+            <h3>Mes cours</h3>
             <button class="btn btn-gold btn-sm" id="newCourseBtn">+ Nouveau cours</button>
           </div>
           <div id="coursesList"><p class="small-muted">Chargement...</p></div>
@@ -825,11 +836,11 @@ footer a:hover{color:var(--gold);}
       </section>
 
       <section id="tab-shop" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0;">Ma boutique</h3>
+        <div class="panel-head">
+          <h3>Ma boutique</h3>
           <a class="btn btn-outline btn-sm hidden" id="viewShopLink" href="#" target="_blank" rel="noopener">Voir ma boutique</a>
         </div>
-        <p class="small-muted" style="margin:0 0 14px;">Votre boutique présente vos produits numériques (ebooks, modèles, ressources). Chaque produit est vérifié par l'équipe de JC Academy avant sa mise en vente.</p>
+        <p class="panel-lead">Votre boutique présente vos produits numériques (ebooks, modèles, ressources). Chaque produit est vérifié par l'équipe de JC Academy avant sa mise en vente.</p>
         <div class="editor-card">
           <div class="form-group"><label>Nom de la boutique</label><input type="text" id="shName" maxlength="80" placeholder="Ex. : Les ressources de Marie"></div>
           <div class="form-group"><label>Présentation</label><textarea id="shDesc" maxlength="2000" placeholder="Décrivez ce que vous proposez dans votre boutique..."></textarea></div>
@@ -852,10 +863,10 @@ footer a:hover{color:var(--gold);}
         </div>
 
         <div class="editor-card hidden" id="shopDomainCard" style="margin-top:16px;">
-          <h4 style="margin-top:0;">Adresse de votre boutique</h4>
+          <h4>Adresse de votre boutique</h4>
           <p class="small-muted" style="margin:0 0 6px;">Adresse automatique :</p>
           <p style="margin:0 0 16px;"><a id="shSubLink" href="#" target="_blank" rel="noopener" style="font-weight:600;word-break:break-all;"></a></p>
-          <h4>Votre propre nom de domaine (facultatif)</h4>
+          <h4 class="section-title">Votre propre nom de domaine (facultatif)</h4>
           <p class="small-muted" style="margin:0 0 10px;">Vous avez acheté un domaine (.com, .store, .ht...) ? Saisissez-le ici, par exemple <b>maboutique.com</b>, puis ajoutez chez votre registraire les enregistrements DNS indiqués.</p>
           <div class="form-group"><input type="text" id="shDomainInput" maxlength="120" placeholder="maboutique.com" autocapitalize="off" autocomplete="off"></div>
           <div id="shDomainStatus" class="small-muted" style="margin:8px 0;display:none;"></div>
@@ -869,8 +880,8 @@ footer a:hover{color:var(--gold);}
       </section>
 
       <section id="tab-products" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0;">Mes produits numériques</h3>
+        <div class="panel-head">
+          <h3>Mes produits numériques</h3>
           <button class="btn btn-gold btn-sm" id="newProductBtn">+ Nouveau produit</button>
         </div>
         <div id="productEditor" class="editor-card hidden">
@@ -1444,7 +1455,7 @@ async function openLessonEdit(lesson, moduleId, box){
   const id = lesson.id;
   wrap.innerHTML = `
     <div class="editor-card" style="margin:8px 0 16px;">
-      <h4 style="margin-top:0;">Modifier la leçon</h4>
+      <h4>Modifier la leçon</h4>
       <div class="form-group"><label>Titre</label><input type="text" id="leTitle-${id}" maxlength="300"></div>
       <div class="form-group"><label>Texte théorique</label><div id="leContent-${id}"></div></div>
       <div class="form-group">

@@ -70,6 +70,7 @@ Dernière mise à jour : 11 novembre 2026, après les sous-domaines de boutique,
 ## Journal des modifications
 | Date | Modification |
 |---|---|
+| 13 nov. 2026 | Uniformisation des tableaux de bord (en-têtes, titres de section, textes d'introduction, boutons « + », champs de formulaire) |
 | 11 nov. 2026 | Sous-domaines et domaines de boutique, badge automatique, sitemap, marquer payé, frais de candidature dans le revenu |
 | 11 nov. 2026 | Type de parcours Badge / Certificat / Diplôme |
 | 11 nov. 2026 | Vitrine de boutique, validation des produits, aperçu des cours, boutiques des formateurs |

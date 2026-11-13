@@ -575,6 +575,15 @@ footer a:hover{color:var(--gold);}
 
 <style>
 .tab-panel{margin-bottom:10px;}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+.panel-head h3{margin:0;}
+.panel-lead{font-size:13.5px;color:var(--text-muted);line-height:1.5;margin:-6px 0 18px;}
+.section-title{font-size:16px;margin:28px 0 12px;}
+.section-title:first-child{margin-top:0;}
+.tab-panel > h3:first-child{margin-top:0;margin-bottom:16px;}
+.panel-head h3{margin:0 !important;}
+.editor-card .section-title:not(:first-child){margin-top:24px;}
+
 .review-card{border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px;}
 .review-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
 .review-card h4{margin:0 0 4px;font-size:15px;}
@@ -591,10 +600,12 @@ select.role-select{padding:7px 10px;border-radius:8px;border:1.5px solid var(--b
 .editor-card h4{margin-top:0;}
 .form-group{margin-bottom:16px;}
 .form-group label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text);}
-.form-group input[type="text"],.form-group textarea,.form-group select{
-  width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;
+.form-group input[type="text"],.form-group input[type="number"],.form-group input[type="url"],.form-group input[type="email"],.form-group input[type="tel"],.form-group input[type="date"],.form-group input[type="time"],.form-group input[type="datetime-local"],.form-group input[type="password"],
+.form-group textarea,.form-group select{
+  width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text);box-sizing:border-box;
 }
-.form-group textarea{min-height:80px;resize:vertical;}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(12,44,116,.08);}
+.form-group textarea{min-height:90px;resize:vertical;}
 .radio-row{display:flex;gap:18px;flex-wrap:wrap;}
 .radio-row label{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--text);}
 .thumb-preview{max-width:180px;border-radius:10px;margin-top:8px;display:none;}
@@ -1013,8 +1024,8 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
       </section>
 
       <section id="tab-stats" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0;">Statistiques &amp; revenus</h3>
+        <div class="panel-head">
+          <h3>Statistiques &amp; revenus</h3>
           <div class="adm-period">
             <select id="statsPeriod" aria-label="Période">
               <option value="all">Toute la période</option>
@@ -1038,7 +1049,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           <div class="dash-stat-card"><b>—</b><span>Revenu JC Academy<br><small id="revenueFeeNote" style="opacity:.75;">ventes + frais de candidature</small></span></div>
         </div>
 
-        <h4 style="margin:8px 0 10px;">Revenus par formateur</h4>
+        <h4 class="section-title">Revenus par formateur</h4>
         <div class="table-wrap" style="margin-bottom:32px;">
           <table class="data-table">
             <thead><tr><th>Formateur</th><th>Inscrits</th><th>Cours vendus</th><th>Brut cours</th><th>Produits vendus</th><th>Brut produits</th><th>Part formateur</th><th>Part JC Academy</th></tr></thead>
@@ -1046,7 +1057,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           </table>
         </div>
 
-        <h4 style="margin:8px 0 10px;">Inscrits par cours / formation</h4>
+        <h4 class="section-title">Inscrits par cours / formation</h4>
         <div class="table-wrap" style="margin-bottom:32px;">
           <table class="data-table">
             <thead><tr><th>Cours</th><th>Formateur</th><th>Statut</th><th>Prix</th><th>Inscrits</th><th>Ventes payées</th><th>Revenu brut</th></tr></thead>
@@ -1054,7 +1065,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           </table>
         </div>
 
-        <h4 style="margin:8px 0 10px;">Achats de produits numériques</h4>
+        <h4 class="section-title">Achats de produits numériques</h4>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr><th>Produit</th><th>Vendeur</th><th>Prix</th><th>Achats payés</th><th>Revenu brut</th><th>Part vendeur (80 %)</th><th>Commission (20 %)</th></tr></thead>
@@ -1065,11 +1076,11 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
       </section>
 
       <section id="tab-payouts" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-          <h3 style="margin:0;">Versements aux formateurs</h3>
-          <button class="btn btn-primary btn-sm" id="newPayoutBtn" type="button">+ Enregistrer un versement</button>
+        <div class="panel-head">
+          <h3>Versements aux formateurs</h3>
+          <button class="btn btn-gold btn-sm" id="newPayoutBtn" type="button">+ Enregistrer un versement</button>
         </div>
-        <p class="small-muted" style="margin:0 0 18px;">Part due : 70 % des cours et 80 % des produits numériques vendus (commandes payées). Les ventes des comptes admin ne sont pas concernées.</p>
+        <p class="panel-lead">Part due : 70 % des cours et 80 % des produits numériques vendus (commandes payées). Les ventes des comptes admin ne sont pas concernées.</p>
         <div class="dash-stats" id="payoutCards">
           <div class="dash-stat-card"><b>—</b><span>Total dû aux formateurs</span></div>
           <div class="dash-stat-card"><b>—</b><span>Déjà versé</span></div>
@@ -1078,7 +1089,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
         </div>
 
         <div id="payoutForm" class="editor-card hidden">
-          <h4 style="margin-top:0;">Nouveau versement</h4>
+          <h4>Nouveau versement</h4>
           <div class="form-group"><label>Bénéficiaire</label><select id="poTeacher"></select></div>
           <div class="form-group"><label>Montant (HTG)</label><input type="number" id="poAmount" min="1" step="0.01"></div>
           <div class="form-group"><label>Moyen de paiement</label>
@@ -1094,14 +1105,14 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
           </div>
         </div>
 
-        <h4 style="margin:8px 0 10px;">Solde par formateur</h4>
+        <h4 class="section-title">Solde par formateur</h4>
         <div class="table-wrap" style="margin-bottom:28px;">
           <table class="data-table">
             <thead><tr><th>Formateur</th><th>Part due</th><th>Déjà versé</th><th>Reste à verser</th><th></th></tr></thead>
             <tbody id="payoutBalanceBody"><tr><td colspan="5">Chargement...</td></tr></tbody>
           </table>
         </div>
-        <h4 style="margin:8px 0 10px;">Historique des versements</h4>
+        <h4 class="section-title">Historique des versements</h4>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr><th>Bénéficiaire</th><th>Date</th><th>Montant</th><th>Moyen</th><th>Référence</th><th></th></tr></thead>
@@ -1112,9 +1123,9 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
 
       <section id="tab-forms" class="tab-panel hidden">
         <div id="formsListView">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-            <h3 style="margin:0;">Formulaires</h3>
-            <button class="btn btn-primary btn-sm" id="newFormBtn" type="button">+ Nouveau formulaire</button>
+          <div class="panel-head">
+            <h3>Formulaires</h3>
+            <button class="btn btn-gold btn-sm" id="newFormBtn" type="button">+ Nouveau formulaire</button>
           </div>
           <div id="formsList"><p class="small-muted">Chargement...</p></div>
         </div>
@@ -1128,7 +1139,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
             <div class="form-group"><label>Message après envoi (facultatif)</label><textarea id="fmSuccess" maxlength="1000" placeholder="Merci, votre réponse a bien été enregistrée."></textarea></div>
           </div>
 
-          <h4 style="margin:0 0 10px;">Questions</h4>
+          <h4 class="section-title">Questions</h4>
           <div id="fmFields"></div>
           <div class="editor-card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px;">
             <select id="fmNewFieldType" style="flex:1;min-width:160px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;">
@@ -1140,7 +1151,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
             <button class="btn btn-outline btn-sm" id="fmAddFieldBtn" type="button">+ Ajouter</button>
           </div>
 
-          <h4 style="margin:20px 0 10px;">Paramètres</h4>
+          <h4 class="section-title">Paramètres</h4>
           <div class="editor-card">
             <div class="form-group"><label>Statut</label>
               <select id="fmStatus"><option value="brouillon">Brouillon (invisible)</option><option value="publie">Publié (accessible par le lien)</option></select>
@@ -1170,11 +1181,12 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
       </section>
 
       <section id="tab-products" class="tab-panel hidden">
-        <h3>Produits à valider</h3>
+        <div class="panel-head"><h3>Produits &amp; boutiques</h3></div>
+        <h4 class="section-title">Produits à valider</h4>
         <div id="productsPending"><p class="small-muted">Chargement...</p></div>
-        <h3 style="margin-top:30px;">Tous les produits</h3>
+        <h4 class="section-title">Tous les produits</h4>
         <div id="productsList"><p class="small-muted">Chargement...</p></div>
-        <h3 style="margin-top:30px;">Boutiques des formateurs</h3>
+        <h4 class="section-title">Boutiques des formateurs</h4>
         <div id="shopsList"><p class="small-muted">Chargement...</p></div>
       </section>
 
@@ -1184,8 +1196,8 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
       </section>
 
       <section id="tab-content" class="tab-panel hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-          <h3 style="margin:0;">Blog & Actualités</h3>
+        <div class="panel-head">
+          <h3>Blog & Actualités</h3>
           <button class="btn btn-gold btn-sm" id="newContentBtn">+ Nouveau contenu</button>
         </div>
         <div id="contentEditor" class="editor-card hidden">
@@ -1239,26 +1251,26 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
       <section id="tab-settings" class="tab-panel hidden">
         <h3>Paramètres du site</h3>
         <div class="editor-card">
-          <h4 style="margin-top:0;">Section d'accueil (héro)</h4>
+          <h4>Section d'accueil (héro)</h4>
           <div class="form-group"><label>Titre</label><input type="text" id="sHeroTitre"></div>
           <div class="form-group"><label>Sous-titre</label><textarea id="sHeroSousTitre" style="min-height:70px;"></textarea></div>
           <div class="form-group"><label>Texte du bouton principal</label><input type="text" id="sHeroCta"></div>
         </div>
         <div class="editor-card">
-          <h4 style="margin-top:0;">Contact</h4>
+          <h4>Contact</h4>
           <div class="form-group"><label>Email</label><input type="text" id="sContactEmail"></div>
           <div class="form-group"><label>Téléphone</label><input type="text" id="sContactTel"></div>
           <div class="form-group"><label>Adresse</label><input type="text" id="sContactAdresse"></div>
         </div>
         <div class="editor-card">
-          <h4 style="margin-top:0;">Réseaux sociaux</h4>
+          <h4>Réseaux sociaux</h4>
           <div class="form-group"><label>Facebook</label><input type="text" id="sFacebook" placeholder="https://facebook.com/..."></div>
           <div class="form-group"><label>Instagram</label><input type="text" id="sInstagram" placeholder="https://instagram.com/..."></div>
           <div class="form-group"><label>YouTube</label><input type="text" id="sYoutube" placeholder="https://youtube.com/..."></div>
           <div class="form-group"><label>LinkedIn</label><input type="text" id="sLinkedin" placeholder="https://linkedin.com/..."></div>
         </div>
         <div class="editor-card">
-          <h4 style="margin-top:0;">Devenir formateur</h4>
+          <h4>Devenir formateur</h4>
           <div class="form-group">
             <label>Frais de candidature (HTG)</label>
             <input type="number" id="sTeacherFee" min="0" step="1" placeholder="0">
@@ -1271,7 +1283,7 @@ body.adm{background:#F3F5FA;overflow-x:hidden;}
 
       <section id="tab-pages" class="tab-panel hidden">
         <h3>Contenu des pages</h3>
-        <p class="small-muted" style="margin-top:-8px;margin-bottom:20px;">Modifiez les titres et textes affichés sur les pages du site. Les libellés de boutons liés au fonctionnement du site (connexion, achat...) ne sont pas modifiables ici pour éviter de casser une fonctionnalité.</p>
+        <p class="panel-lead">Modifiez les titres et textes affichés sur les pages du site. Les libellés de boutons liés au fonctionnement du site (connexion, achat...) ne sont pas modifiables ici pour éviter de casser une fonctionnalité.</p>
         <div class="editor-card">
           <div class="form-group">
             <label>Page à modifier</label>
@@ -2071,7 +2083,7 @@ async function openFormResponses(id){
   body.innerHTML = `
     <p class="small-muted" style="margin:0 0 16px;">${rows.length} réponse(s)</p>
     ${summary ? `<h4 style="margin:0 0 10px;">Résumé</h4>${summary}` : ''}
-    <h4 style="margin:20px 0 10px;">Toutes les réponses</h4>
+    <h4 class="section-title">Toutes les réponses</h4>
     <div class="table-wrap">
       <table class="data-table">
         <thead><tr><th>Date</th><th>Compte</th>${questions.map(q => `<th>${escapeHtml(q.label)}</th>`).join('')}<th></th></tr></thead>

@@ -4,7 +4,7 @@
 // - Fichiers statiques du site (images, scripts) : affichés depuis le cache
 //   et mis à jour en arrière-plan.
 // - Supabase, paiements, CDN et autres domaines : jamais interceptés.
-const VERSION = 'jc-v1';
+const VERSION = 'jc-v2';
 const STATIC_CACHE = VERSION + '-static';
 const PAGES_CACHE = VERSION + '-pages';
 const PRECACHE = [

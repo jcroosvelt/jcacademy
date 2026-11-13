@@ -624,6 +624,14 @@ footer a:hover{color:var(--gold);}
 .thumb-preview.show{display:block;}
 </style>
 
+<script>if(/[?&]embed=1/.test(location.search))document.documentElement.classList.add('embed');</script>
+<style>
+html.embed .topbar,html.embed header,html.embed footer,html.embed .dash-sidebar,html.embed .dash-welcome,html.embed .nav-burger{display:none !important;}
+html.embed body{background:#fff;}
+html.embed .container{max-width:none;padding:0;}
+html.embed .dash-shell{display:block;min-height:0;}
+html.embed .dash-main{padding:4px 2px 24px;}
+</style>
 </head>
 <body>
 

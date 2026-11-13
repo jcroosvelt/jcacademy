@@ -50,7 +50,7 @@
 .jced-status.err{color:#C0392B;font-weight:600;}
 .jced-save{flex:0 0 auto;border:none;background:var(--gold,#F5A800);color:#071D52;font:700 13px Inter,sans-serif;padding:8px 14px;border-radius:9px;cursor:pointer;margin:4px 4px 4px 0;}
 .jced-ribbon{background:var(--surface,#F7F9FC);border-bottom:1px solid var(--border,#E4E9F2);overflow-x:auto;scrollbar-width:none;position:relative;}
-.jced-panel{display:none;align-items:center;padding:8px 6px;min-width:max-content;}
+.jced-panel{display:none;align-items:center;flex-wrap:wrap;row-gap:6px;padding:8px 6px;min-width:0;}
 .jced-panel.on{display:flex;}
 .jced-g{display:flex;align-items:center;gap:2px;padding:0 8px;border-right:1px solid var(--border,#E4E9F2);}
 .jced-g:last-child{border-right:none;}
@@ -66,6 +66,11 @@
 .jced-chip:hover:not(:disabled){background:var(--navy-soft,#E7ECF7);}
 .jced-chip:disabled{opacity:.4;cursor:default;}
 .jced-sel{height:34px;border:1px solid var(--border,#E4E9F2);border-radius:8px;background:#fff;font:500 13px Inter,sans-serif;padding:0 6px;color:var(--text,#14213D);max-width:150px;cursor:pointer;flex:0 0 auto;}
+.jced select.jced-sel{width:auto;min-width:0;height:34px;padding:0 24px 0 8px;margin:0;border:1px solid var(--border,#E4E9F2);border-radius:8px;background-color:#fff;color:var(--text,#14213D);font:500 13px Inter,sans-serif;max-width:175px;line-height:normal;box-shadow:none;}
+.jced select.jced-sel:focus{outline:none;border-color:var(--navy,#0C2C74);box-shadow:none;}
+.jced .jced-find label{display:flex;margin:0;font-weight:500;font-size:12px;color:var(--text-muted,#5B6B85);}
+.jced .jced-find input[type=text]{width:100%;height:34px;padding:0 10px;margin:0;box-shadow:none;}
+.jced input[type=color]{width:34px;height:30px;padding:0;border:none;background:none;box-shadow:none;}
 .jced-lbl{font:600 11px Inter,sans-serif;color:var(--text-muted,#5B6B85);margin-right:4px;white-space:nowrap;}
 .jced-pop{position:absolute;z-index:40;background:#fff;border:1px solid var(--border,#E4E9F2);border-radius:12px;box-shadow:0 14px 40px rgba(12,44,116,.22);padding:12px;font-family:Inter,sans-serif;}
 .jced-sw{display:grid;grid-template-columns:repeat(8,26px);gap:6px;}
